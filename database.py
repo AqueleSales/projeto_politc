@@ -13,58 +13,30 @@ def criar_tabelas():
 
     # TABELA 1: Notícias e Leis
     cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS noticias
-                   (
-                       id_noticia
-                       INTEGER
-                       PRIMARY
-                       KEY,
-                       numero_lei
-                       TEXT,
-                       ano_lei
-                       INTEGER,
-                       ementa_oficial
-                       TEXT,
-                       titulo_vitrine
-                       TEXT,
-                       resumo_vitrine
-                       TEXT,
-                       materia_completa
-                       TEXT
-                   )
-                   ''')
+        CREATE TABLE IF NOT EXISTS noticias (
+            id_noticia INTEGER PRIMARY KEY,
+            numero_lei TEXT,
+            ano_lei INTEGER,
+            ementa_oficial TEXT,
+            titulo_vitrine TEXT,
+            resumo_vitrine TEXT,
+            materia_completa TEXT
+        )
+    ''')
 
     # TABELA 2: Fórum de Discussão
     cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS forum
-                   (
-                       id_comentario
-                       INTEGER
-                       PRIMARY
-                       KEY
-                       AUTOINCREMENT,
-                       id_noticia
-                       INTEGER,
-                       nome_usuario
-                       TEXT,
-                       categoria_trabalhador
-                       TEXT,
-                       texto_comentario
-                       TEXT,
-                       nota_impacto
-                       INTEGER,
-                       classificacao_ia
-                       TEXT,
-                       FOREIGN
-                       KEY
-                   (
-                       id_noticia
-                   ) REFERENCES noticias
-                   (
-                       id_noticia
-                   )
-                       )
-                   ''')
+        CREATE TABLE IF NOT EXISTS forum (
+            id_comentario INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_noticia INTEGER,
+            nome_usuario TEXT,
+            categoria_trabalhador TEXT,
+            texto_comentario TEXT,
+            nota_impacto INTEGER,
+            classificacao_ia TEXT,
+            FOREIGN KEY (id_noticia) REFERENCES noticias (id_noticia)
+        )
+    ''')
 
     conn.commit()
     conn.close()
@@ -79,18 +51,19 @@ def buscar_vitrine_paginada(pagina=1, limite=3):
     cursor = conn.cursor()
     pulo = (pagina - 1) * limite
 
-    # Mudamos para ASC. As novas leis vão para o final da fila (Página 2, 3...)
+    # Usamos ASC. As novas leis vão para o final da fila (Página 2, 3...)
     cursor.execute('''
-                   SELECT id_noticia, titulo_vitrine
-                   FROM noticias
-                   WHERE titulo_vitrine IS NOT NULL
-                   ORDER BY id_noticia ASC LIMIT ?
-                   OFFSET ?
-                   ''', (limite, pulo))
+        SELECT id_noticia, titulo_vitrine
+        FROM noticias
+        WHERE titulo_vitrine IS NOT NULL
+        ORDER BY id_noticia ASC 
+        LIMIT ? OFFSET ?
+    ''', (limite, pulo))
 
     resultados = cursor.fetchall()
     conn.close()
     return resultados
+
 
 def tem_proxima_pagina(pagina_atual, limite=3):
     """Olha uma página para frente para ver se o botão 'proximo' deve funcionar."""
