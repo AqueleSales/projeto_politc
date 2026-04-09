@@ -3,7 +3,7 @@ from google import genai
 from database import conectar
 
 # Substitua pela sua CHAVE NOVA gerada no Google AI Studio (Não compartilhe!)
-CHAVE_API = "AIzaSyDnw8rdirMImPgdEYswsRiKn_IwH5x3DHU"
+CHAVE_API = "XXX"
 client = genai.Client(api_key=CHAVE_API)
 
 
