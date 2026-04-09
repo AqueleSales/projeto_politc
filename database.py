@@ -75,26 +75,22 @@ def criar_tabelas():
 # ==========================================
 
 def buscar_vitrine_paginada(pagina=1, limite=3):
-    """Busca os títulos no banco de dados usando LIMIT e OFFSET."""
     conn = conectar()
     cursor = conn.cursor()
-
-    # O OFFSET é o "pulo" do carrossel
     pulo = (pagina - 1) * limite
 
-    # Traz as notícias mais recentes primeiro (ORDER BY id_noticia DESC)
+    # Mudamos para ASC. As novas leis vão para o final da fila (Página 2, 3...)
     cursor.execute('''
                    SELECT id_noticia, titulo_vitrine
                    FROM noticias
                    WHERE titulo_vitrine IS NOT NULL
-                   ORDER BY id_noticia DESC LIMIT ?
+                   ORDER BY id_noticia ASC LIMIT ?
                    OFFSET ?
                    ''', (limite, pulo))
 
     resultados = cursor.fetchall()
     conn.close()
     return resultados
-
 
 def tem_proxima_pagina(pagina_atual, limite=3):
     """Olha uma página para frente para ver se o botão 'proximo' deve funcionar."""
