@@ -1,41 +1,54 @@
-import time
-from google import genai
+import time # <-- pega o tempo
+import json # <--
+from google import genai # <-- importa a IA gemini, para realizar as requisições
 from database import conectar
 
-# COLE SUA CHAVE NOVA AQUI (Lembre-se: não compartilhe no chat!)
-CHAVE_API = "SUA_CHAVE_AQUI"
+#   Chave API do google
+CHAVE_API = "AIzaSyBiU_QdbzfGol8CNx9alnbrmKGHHdrQqAU"
 client = genai.Client(api_key=CHAVE_API)
 
-
+#   primeiro agente IA  que faz um titulo curto e chamataivo
 def agente_editor(ementa):
+    # Mudamos o prompt para pedir um JSON perfeito
     prompt = f"""
     Você é um editor-chefe de um portal de notícias de política internacional.
-    Leia a seguinte ementa de um projeto de lei e crie:
-    1. Um título curto e chamativo (máximo de 8 palavras).
-    2. Um resumo simples e direto para o cidadão comum (máximo de 3 frases).
-
-    Formato obrigatório:
-    TÍTULO: [Seu título aqui]
-    RESUMO: [Seu resumo aqui]
+    Leia a ementa de um projeto de lei e crie um título curto (máx 8 palavras) e um resumo (máx 3 frases).
 
     Ementa original: {ementa}
     """
 
     for tentativa in range(3):
         try:
-            response = client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
-            texto = response.text
-            partes = texto.split('RESUMO:')
-            titulo = partes[0].replace('TÍTULO:', '').strip()
-            resumo = partes[1].strip() if len(partes) > 1 else "Resumo não gerado."
-            return titulo, resumo
+            # Aqui está a mágica: Obrigamos a IA a cuspir um JSON
+            response = client.models.generate_content(
+                model='gemini-3.1-flash-lite-preview',
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    # Dizemos exatamente como queremos o dicionário
+                    response_schema={
+                        "type": "OBJECT",
+                        "properties": {
+                            "titulo": {"type": "STRING"},
+                            "resumo": {"type": "STRING"}
+                        },
+                        "required": ["titulo", "resumo"]
+                    }
+                )
+            )
+
+            # O Python transforma a resposta da IA direto em um Dicionário nativo!
+            dados = json.loads(response.text)
+
+            return dados["titulo"], dados["resumo"]
+
         except Exception as e:
             erro = str(e)
             if '429' in erro:
-                print(f"      ⚠️ Cota por minuto atingida (Erro 429). Respirando fundo por 30s... ({tentativa + 1}/3)")
+                print(f"      ⚠️ Cota por minuto atingida. Respirando 30s... ({tentativa + 1}/3)")
                 time.sleep(30)
             elif '503' in erro:
-                print(f"      ⚠️ Google ocupado (Erro 503). Pausando 20s e tentando de novo... ({tentativa + 1}/3)")
+                print(f"      ⚠️ Google ocupado. Pausando 20s e tentando de novo... ({tentativa + 1}/3)")
                 time.sleep(20)
             else:
                 print(f"Erro no Agente Editor: {e}")

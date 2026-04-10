@@ -2,12 +2,12 @@ import sqlite3
 
 
 def conectar():
-    """Cria e retorna a conexão com o banco de dados principal."""
+#   cria e retorna a conexão com o banco de dados principal.
     return sqlite3.connect('banco_politico.db')
 
 
 def criar_tabelas():
-    """Configura o banco de dados do zero para suportar Front-end e IAs."""
+#   configura o banco de dados do zero para suportar Front-end e IAs.
     conn = conectar()
     cursor = conn.cursor()
 
