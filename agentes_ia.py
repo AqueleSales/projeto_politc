@@ -4,7 +4,7 @@ from google import genai # <-- importa a IA gemini, para realizar as requisiçõ
 from database import conectar
 
 #   Chave API do google
-CHAVE_API = "AIzaSyBiU_QdbzfGol8CNx9alnbrmKGHHdrQqAU"
+CHAVE_API = "CHAVE_API_GEMINI"
 client = genai.Client(api_key=CHAVE_API)
 
 #   primeiro agente IA  que faz um titulo curto e chamataivo
