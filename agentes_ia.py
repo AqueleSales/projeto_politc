@@ -3,7 +3,7 @@ from google import genai
 from database import conectar
 
 # CHAVE API AQUI
-CHAVE_API = "Chave api"
+CHAVE_API = "AIzaSyC2LZmRhhxGK_Ol0ozGHYBNwjl52et73XI"
 client = genai.Client(api_key=CHAVE_API)
 
 def agente_editor(ementa):
@@ -75,7 +75,7 @@ def gerar_titulos_pendentes(limite=3):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT id_noticia, ementa_oficial FROM noticias WHERE titulo_vitrine IS NULL OR titulo_vitrine = 'Título Indisponível' ORDER BY id_noticia ASC LIMIT ?",
+        "SELECT id_noticia, ementa_oficial FROM noticias WHERE titulo_vitrine IS NULL OR titulo_vitrine = 'Título Indisponível' ORDER BY id_noticia ASC LIMIT %s",
         (limite,)
     )
     pendentes = cursor.fetchall()
@@ -91,8 +91,9 @@ def gerar_titulos_pendentes(limite=3):
 
         cursor.execute('''
                        UPDATE noticias
-                       SET titulo_vitrine = ?, resumo_vitrine = ?
-                       WHERE id_noticia = ?
+                       SET titulo_vitrine = %s,
+                           resumo_vitrine = %s
+                       WHERE id_noticia = %s
                        ''', (titulo, resumo, id_noticia))
 
         print(f"  -> Título gerado: {titulo}")
@@ -107,7 +108,7 @@ def gerar_materia_sob_demanda(id_noticia):
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT ementa_oficial, materia_completa FROM noticias WHERE id_noticia = ?", (id_noticia,))
+    cursor.execute("SELECT ementa_oficial, materia_completa FROM noticias WHERE id_noticia = %s", (id_noticia,))
     resultado = cursor.fetchone()
 
     if not resultado:
@@ -123,7 +124,7 @@ def gerar_materia_sob_demanda(id_noticia):
     print(f"\n[Agente 2] Lendo documento oficial e redigindo matéria exclusiva. Aguarde...")
     nova_materia = agente_jornalista(ementa)
 
-    cursor.execute("UPDATE noticias SET materia_completa = ? WHERE id_noticia = ?", (nova_materia, id_noticia))
+    cursor.execute("UPDATE noticias SET materia_completa = %s WHERE id_noticia = %s", (nova_materia, id_noticia))
     conn.commit()
     conn.close()
 

@@ -47,5 +47,9 @@ def api_ler_materia(id_noticia):
 
 
 if __name__ == '__main__':
+    # ---> A LINHA MÁGICA QUE RESOLVE O ERRO <---
+    # Isso garante que a nuvem tenha as tabelas prontas toda vez que ligar
+    database.criar_tabelas()
+
     print("🚀 Servidor Web iniciado! Acesse: http://127.0.0.1:5000")
     app.run(debug=True, port=5000)

@@ -1,20 +1,26 @@
-import sqlite3
+import psycopg2
+from sqlalchemy import create_engine
 
+# COLE A SUA URL DO NEON AQUI DENTRO (Mantenha as aspas)
+DATABASE_URL = "postgresql://neondb_owner:npg_3nspW5CZSgoT@ep-polished-surf-amc2p54x-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 def conectar():
-#   cria e retorna a conexão com o banco de dados principal.
-    return sqlite3.connect('banco_politico.db')
+    # Cria a conexão direta com a Nuvem
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
 
+def obter_engine_pandas():
+    # O Pandas precisa desse "engine" especial para salvar os dados na nuvem
+    return create_engine(DATABASE_URL)
 
 def criar_tabelas():
-#   configura o banco de dados do zero para suportar Front-end e IAs.
     conn = conectar()
     cursor = conn.cursor()
 
-    # TABELA 1: Notícias e Leis
+    # No Postgres, usamos BIGINT para IDs longos e SERIAL para autoincremento
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS noticias (
-            id_noticia INTEGER PRIMARY KEY,
+            id_noticia BIGINT PRIMARY KEY,
             numero_lei TEXT,
             ano_lei INTEGER,
             ementa_oficial TEXT,
@@ -24,53 +30,53 @@ def criar_tabelas():
         )
     ''')
 
-    # TABELA 2: Fórum de Discussão
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS forum (
-            id_comentario INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_noticia INTEGER,
+            id_comentario SERIAL PRIMARY KEY,
+            id_noticia BIGINT,
             nome_usuario TEXT,
             categoria_trabalhador TEXT,
             texto_comentario TEXT,
-            nota_impacto INTEGER,
+            nota_impacto REAL,
             classificacao_ia TEXT,
-            FOREIGN KEY (id_noticia) REFERENCES noticias (id_noticia)
+            FOREIGN KEY (id_noticia) REFERENCES noticias(id_noticia)
         )
     ''')
-
     conn.commit()
     conn.close()
-
-
-# ==========================================
-# FUNÇÕES DE CARROSSEL (PAGINAÇÃO)
-# ==========================================
 
 def buscar_vitrine_paginada(pagina=1, limite=3):
     conn = conectar()
     cursor = conn.cursor()
-    pulo = (pagina - 1) * limite
+    offset = (pagina - 1) * limite
 
-    # Usamos ASC. As novas leis vão para o final da fila (Página 2, 3...)
+    # No Postgres usamos %s no lugar de ?
     cursor.execute('''
         SELECT id_noticia, titulo_vitrine
         FROM noticias
         WHERE titulo_vitrine IS NOT NULL
-        ORDER BY id_noticia ASC 
-        LIMIT ? OFFSET ?
-    ''', (limite, pulo))
+          AND titulo_vitrine != 'Título Indisponível'
+        ORDER BY id_noticia DESC
+        LIMIT %s OFFSET %s
+    ''', (limite, offset))
 
     resultados = cursor.fetchall()
     conn.close()
     return resultados
 
+def tem_proxima_pagina(pagina, limite):
+    conn = conectar()
+    cursor = conn.cursor()
+    offset = pagina * limite
 
-def tem_proxima_pagina(pagina_atual, limite=3):
-    """Olha uma página para frente para ver se o botão 'proximo' deve funcionar."""
-    resultados_futuros = buscar_vitrine_paginada(pagina_atual + 1, limite)
-    return len(resultados_futuros) > 0
+    cursor.execute('''
+        SELECT COUNT(*)
+        FROM noticias
+        WHERE titulo_vitrine IS NOT NULL
+          AND titulo_vitrine != 'Título Indisponível'
+        OFFSET %s LIMIT 1
+    ''', (offset,))
 
-
-if __name__ == "__main__":
-    criar_tabelas()
-    print("Tabelas verificadas e funções de paginação prontas!")
+    qtd = cursor.fetchone()[0]
+    conn.close()
+    return qtd > 0
