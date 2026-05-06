@@ -4,7 +4,7 @@ from google import genai
 from database import conectar
 
 # COLE SUA CHAVE AQUI (Escondida dos robôs do Google!)
-CHAVE_API = "AIzaSyBiU_QdbzfGol8CNx9alnbrmKGHHdrQqAU"
+CHAVE_API = "chave api"
 client = genai.Client(api_key=CHAVE_API)
 
 

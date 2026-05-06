@@ -1,0 +1,244 @@
+:root {
+    --bg-color: #FFFFFF;
+    --text-main: #1A1A1A;
+    --yellow-hero: #F4C430; /* O amarelo do seu design */
+    --gray-card: #E2E2E2; /* O cinza das caixas de novidade */
+    --sidebar-width: 250px;
+    --border-color: #EAEAEA;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0;
+}
+
+.layout-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar Esquerda */
+.sidebar {
+    width: var(--sidebar-width);
+    position: fixed;
+    height: 100vh;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    z-index: 10;
+}
+
+.logo-area {
+    padding: 2rem 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.main-nav ul, .footer-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.main-nav li a {
+    display: block;
+    padding: 0.8rem 1.5rem;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.main-nav li a:hover, .main-nav li a.active {
+    background-color: #F5F5F5;
+}
+
+.main-nav sup {
+    font-size: 0.6rem;
+    color: #888;
+    margin-left: 4px;
+}
+
+.footer-nav {
+    margin-top: auto;
+    padding: 2rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-nav a {
+    color: #666;
+    text-decoration: none;
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Conteúdo Principal */
+.content-area {
+    margin-left: var(--sidebar-width);
+    flex-grow: 1;
+}
+
+/* Hero Section (Amarela) */
+.hero-section {
+    background-color: var(--yellow-hero);
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Aqui você adiciona o background-image depois */
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    letter-spacing: -2px;
+}
+
+/* Visão Geral */
+.about-section {
+    padding: 4rem 3rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 4rem;
+    max-width: 1000px;
+}
+
+.about-title h2 {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin: 0 0 2rem 0;
+}
+
+.megaphone-placeholder {
+    font-size: 6rem;
+    opacity: 0.8;
+}
+
+.about-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #444;
+}
+
+/* Novidades (Notícias) */
+.news-section {
+    padding: 4rem 3rem;
+}
+
+.news-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.card-noticia {
+    background-color: var(--gray-card);
+    aspect-ratio: 4 / 3;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.card-noticia:hover {
+    transform: translateY(-5px);
+    background-color: #D5D5D5;
+}
+
+.card-noticia h3 {
+    font-size: 1.1rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Paginação Minimalista */
+.paginacao {
+    margin-top: 3rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+button {
+    background: none;
+    border: 1px solid #000;
+    padding: 0.5rem 1.5rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:disabled {
+    border-color: #CCC;
+    color: #CCC;
+    cursor: not-allowed;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(255,255,255,0.95);
+}
+
+.modal-content {
+    background-color: var(--bg-color);
+    margin: 5% auto;
+    padding: 4rem;
+    border: 1px solid #000;
+    width: 70%;
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.tag-modal {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--yellow-hero);
+    display: block;
+    margin-bottom: 1rem;
+}
+
+#modal-titulo {
+    font-size: 2.5rem;
+    line-height: 1.1;
+    margin-top: 0;
+    letter-spacing: -1px;
+}
+
+#modal-texto {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+.close-btn {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    font-size: 2rem;
+    cursor: pointer;
+}

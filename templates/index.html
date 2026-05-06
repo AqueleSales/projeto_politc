@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REDO - Leis da República</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="layout-wrapper">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <h2>eREDO</h2>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" class="active">Visão Geral<sup>01</sup></a></li>
+                    <li><a href="#">Projetos de Lei<sup>02</sup></a></li>
+                    <li><a href="#">Fórum<sup>03</sup></a></li>
+                    <li><a href="#">Dashboard<sup>04</sup></a></li>
+                </ul>
+            </nav>
+            <div class="footer-nav">
+                <ul>
+                    <li><a href="#">Sobre Nós</a></li>
+                    <li><a href="#">Contato</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <section class="hero-section">
+                 <div class="hero-content">
+                     <h1>eREDO</h1>
+                </div>
+            </section>
+
+            <section class="about-section">
+                <div class="about-grid">
+                    <div class="about-title">
+                        <h2>Visão<br>Geral</h2>
+                        <div class="megaphone-placeholder">📣</div>
+                    </div>
+                    <div class="about-text">
+                        <p>Este portal foi desenvolvido para traduzir a complexidade do cenário legislativo em informações claras e acessíveis, garantindo transparência e compreensão de novos projetos de lei, independentemente do nível de conhecimento técnico do usuário.</p>
+                        <p>Em sua essência, o projeto foca na precisão dos dados oficiais e na clareza do impacto social — nossa missão é conectar as decisões governamentais à realidade do trabalhador. Este sistema organiza diretrizes, votações e debates, permitindo que a sociedade civil avalie consequências e participe ativamente da fiscalização democrática.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="news-section">
+                <h2>Novidade</h2>
+                <div id="feed-noticias" class="news-grid">
+                    <div class="loading">Buscando atualizações na Câmara...</div>
+                </div>
+
+                <div class="paginacao">
+                    <button id="btn-anterior" disabled>Anterior</button>
+                    <span id="pagina-atual">1</span>
+                    <button id="btn-proximo">Próximo</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-materia" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <span class="tag-modal">LEITURA COMPLETA</span>
+            <h2 id="modal-titulo">Título da Matéria</h2>
+            <div id="modal-texto">
+                <div class="loading">Processando impacto social...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

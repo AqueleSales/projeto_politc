@@ -12,26 +12,25 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 1. O "PORTEIRO" (Filtro Inteligente e Gratuito)
 # ==========================================
 def eh_assunto_relevante(ementa):
-#
-#   Verifica se o texto contém palavras-chave do nosso interesse.
-#
     if not ementa:
         return False
 
+    # LISTA ATUALIZADA: Internacional + Políticas Públicas Nacionais
     palavras_chave = [
-        'sanção', 'sanções', 'embaixada', 'diplomacia',
-        'acordo bilateral', 'tratado', 'embargo',
-        'relações exteriores', 'onu', 'mercosul', 'guerra'
+        # Internacional
+        'sanção', 'sanções', 'embaixada', 'diplomacia', 'acordo bilateral',
+        'tratado', 'embargo', 'relações exteriores', 'onu', 'mercosul', 'guerra',
+        # Políticas Públicas (NOVO)
+        'saúde pública', 'educação', 'previdência', 'segurança pública',
+        'infraestrutura', 'imposto', 'tributário', 'direitos trabalhistas',
+        'meio ambiente', 'saneamento', 'política pública', 'moradia', 'sus'
     ]
-
     ementa_minuscula = ementa.lower()
 
     for palavra in palavras_chave:
         if palavra in ementa_minuscula:
             return True
-
     return False
-
 # ==========================================
 # 2. COLETOR 1: CÂMARA DOS DEPUTADOS (Leis)
 # ==========================================
