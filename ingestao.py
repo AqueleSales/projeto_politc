@@ -3,7 +3,7 @@ import pandas as pd # <-- serve para manipulação, limpeza, tratamento e análi
 import urllib3 # <-- Requisições HTTP
 import feedparser  # <-- ler e analisar feeds de notícias e conteúdos web (rss)
 import hashlib  # <-- transformar dados de entrada para gerar um ID numérico único para as notas
-from database import conectar
+from database import obter_engine_pandas
 
 # Desativa os avisos de SSL
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -12,26 +12,25 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # 1. O "PORTEIRO" (Filtro Inteligente e Gratuito)
 # ==========================================
 def eh_assunto_relevante(ementa):
-#
-#   Verifica se o texto contém palavras-chave do nosso interesse.
-#
     if not ementa:
         return False
 
+    # LISTA ATUALIZADA: Internacional + Políticas Públicas Nacionais
     palavras_chave = [
-        'sanção', 'sanções', 'embaixada', 'diplomacia',
-        'acordo bilateral', 'tratado', 'embargo',
-        'relações exteriores', 'onu', 'mercosul', 'guerra'
+        # Internacional
+        'sanção', 'sanções', 'embaixada', 'diplomacia', 'acordo bilateral',
+        'tratado', 'embargo', 'relações exteriores', 'onu', 'mercosul', 'guerra',
+        # Políticas Públicas (NOVO)
+        'saúde pública', 'educação', 'previdência', 'segurança pública',
+        'infraestrutura', 'imposto', 'tributário', 'direitos trabalhistas',
+        'meio ambiente', 'saneamento', 'política pública', 'moradia', 'sus'
     ]
-
     ementa_minuscula = ementa.lower()
 
     for palavra in palavras_chave:
         if palavra in ementa_minuscula:
             return True
-
     return False
-
 # ==========================================
 # 2. COLETOR 1: CÂMARA DOS DEPUTADOS (Leis)
 # ==========================================
@@ -130,19 +129,14 @@ def coletar_dados_itamaraty():
 # 4. FUNÇÕES DE BANCO DE DADOS
 # ==========================================
 def salvar_noticias(df):
-    if df.empty:
-        return
-#   aqui ele conecta com sql e usa para salva as noticias
-    conn = conectar()
+    if df.empty: return
     try:
-        df.to_sql('noticias', conn, if_exists='append', index=False)
-        print(f"  -> Sucesso! {len(df)} registros salvos na tabela 'noticias'.")
+        # Agora o Pandas fala direto com a nuvem pelo SQLAlchemy
+        engine = obter_engine_pandas()
+        df.to_sql('noticias', engine, if_exists='append', index=False)
+        print(f"  -> Sucesso! {len(df)} registros salvos na NUVEM na tabela 'noticias'.")
     except Exception as e:
-        # Se der erro de PRIMARY KEY (id_noticia já existe), ignoramos, pois significa
-        # que já baixamos essa lei/nota antes.
-        pass
-    finally:
-        conn.close()
+        print(f"  -> Lei já existe no banco ou erro: {e}")
 
 
 def executar_ingestao():

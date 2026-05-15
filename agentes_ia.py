@@ -1,98 +1,87 @@
-import time # <-- pega o tempo
-import json # <--
-from google import genai # <-- importa a IA gemini, para realizar as requisições
+import time
+import json
+# pip install groq (ou a biblioteca da provedora que for hospedar o Gemma)
+from groq import Groq 
 from database import conectar
 
-#   Chave API do google
-CHAVE_API = "CHAVE_API_GEMINI"
-client = genai.Client(api_key=CHAVE_API)
+# CHAVE API DA SUA PROVEDORA (Ex: Groq)
+CHAVE_API = ""
+client = Groq(api_key=CHAVE_API)
+MODELO_GEMMA = "gemma-4-26b-it" # A tag "it" significa Instruction Tuned
 
-#   primeiro agente IA  que faz um titulo curto e chamataivo
 def agente_editor(ementa):
-    # Mudamos o prompt para pedir um JSON perfeito
-    prompt = f"""
-    Você é um editor-chefe de um portal de notícias de política internacional.
-    Leia a ementa de um projeto de lei e crie um título curto (máx 8 palavras) e um resumo (máx 3 frases).
+    # 1. MODO SYSTEM PROMPT (A personalidade inquebrável da IA)
+    system_prompt = """Você é um editor-chefe de um portal de notícias focado em Políticas Públicas.
+Sua tarefa é retornar APENAS um JSON válido contendo duas chaves:
+1. "titulo": Um título curto e chamativo (máx 8 palavras).
+2. "resumo": Um resumo simples e direto para o cidadão comum (máx 3 frases)."""
 
-    Ementa original: {ementa}
-    """
+    # 2. MODO USER (Apenas os dados brutos)
+    user_prompt = f"Ementa original:\n{ementa}"
 
     for tentativa in range(3):
         try:
-            # Aqui está a mágica: Obrigamos a IA a cuspir um JSON
-            response = client.models.generate_content(
-                model='gemini-3.1-flash-lite-preview',
-                contents=prompt,
-                config=genai.types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    # Dizemos exatamente como queremos o dicionário
-                    response_schema={
-                        "type": "OBJECT",
-                        "properties": {
-                            "titulo": {"type": "STRING"},
-                            "resumo": {"type": "STRING"}
-                        },
-                        "required": ["titulo", "resumo"]
-                    }
-                )
+            response = client.chat.completions.create(
+                model=MODELO_GEMMA,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                # 3. FUNCTION CALLING / NATIVE JSON: Força a saída estruturada
+                response_format={"type": "json_object"} 
             )
-
-            # O Python transforma a resposta da IA direto em um Dicionário nativo!
-            dados = json.loads(response.text)
-
-            return dados["titulo"], dados["resumo"]
+            
+            # Pega o texto puro e converte direto para Dicionário Python
+            conteudo = response.choices[0].message.content
+            dados = json.loads(conteudo)
+            
+            return dados.get("titulo", "Título Indisponível"), dados.get("resumo", "Resumo não gerado.")
 
         except Exception as e:
-            erro = str(e)
-            if '429' in erro:
-                print(f"      ⚠️ Cota por minuto atingida. Respirando 30s... ({tentativa + 1}/3)")
-                time.sleep(30)
-            elif '503' in erro:
-                print(f"      ⚠️ Google ocupado. Pausando 20s e tentando de novo... ({tentativa + 1}/3)")
-                time.sleep(20)
-            else:
-                print(f"Erro no Agente Editor: {e}")
-                break
+            print(f"      ⚠️ Erro no modelo ou limite atingido. Respirando 10s... ({tentativa + 1}/3) | Erro: {e}")
+            time.sleep(10)
 
     return "Título Indisponível", "Resumo Indisponível"
 
-
 def agente_jornalista(ementa):
-    prompt = f"""
-    Você é um jornalista especializado em Relações Internacionais e Economia Brasileira.
-    Escreva uma matéria envolvente (cerca de 3 a 4 parágrafos) explicando o seguinte projeto de lei.
-    Explique o contexto, o que ele muda na prática e qual o possível impacto para o Brasil e para os trabalhadores.
-    Use uma linguagem clara, sem jargões jurídicos. Seja imparcial e informativo.
+    system_prompt = """Você é um jornalista investigativo especializado em Políticas Públicas.
+A sua prioridade absoluta é explicar o IMPACTO NA VIDA DO CIDADÃO: 
+Como essa lei muda o dia a dia do brasileiro? Vai afetar o bolso, a saúde, a segurança ou o trabalho das pessoas?
+Use uma linguagem clara, sem jargões jurídicos. Seja imparcial, mas mostre os prós e contras práticos.
+Escreva uma matéria envolvente de 3 a 4 parágrafos."""
 
-    Ementa original: {ementa}
-    """
+    user_prompt = f"Escreva a matéria para a seguinte ementa:\n{ementa}"
 
     for tentativa in range(3):
         try:
-            response = client.models.generate_content(model='gemini-3.1-flash-lite-preview', contents=prompt)
-            return response.text.strip()
+            # 4. CONTEXTO ESTENDIDO: O Gemma lê a ementa inteira com facilidade aqui
+            response = client.chat.completions.create(
+                model=MODELO_GEMMA,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+            return response.choices[0].message.content.strip()
+
         except Exception as e:
-            erro = str(e)
-            if '429' in erro:
-                print(f"      ⚠️ Cota por minuto atingida. Respirando 30s... ({tentativa + 1}/3)")
-                time.sleep(60)
-            elif '503' in erro:
-                print(f"      ⚠️ Google ocupado. Pausando 20s e tentando de novo... ({tentativa + 1}/3)")
-                time.sleep(60)
-            else:
-                print(f"Erro no Agente Jornalista: {e}")
-                break
+            print(f"      ⚠️ Erro no modelo ou limite atingido. Respirando 15s... ({tentativa + 1}/3) | Erro: {e}")
+            time.sleep(15)
 
     return "Matéria completa indisponível no momento."
 
+
+# =====================================================================
+# AS FUNÇÕES DE BANCO DE DADOS ABAIXO CONTINUAM EXATAMENTE IGUAIS
+# O Python só manda os dados pra IA e grava no Neon do mesmo jeito!
+# =====================================================================
 
 def gerar_titulos_pendentes(limite=3):
     conn = conectar()
     cursor = conn.cursor()
 
-    # Usamos ASC para ele sempre processar os mais antigos primeiro (corrige a paginação)
     cursor.execute(
-        "SELECT id_noticia, ementa_oficial FROM noticias WHERE titulo_vitrine IS NULL OR titulo_vitrine = 'Título Indisponível' ORDER BY id_noticia ASC LIMIT ?",
+        "SELECT id_noticia, ementa_oficial FROM noticias WHERE titulo_vitrine IS NULL OR titulo_vitrine = 'Título Indisponível' ORDER BY id_noticia ASC LIMIT %s",
         (limite,)
     )
     pendentes = cursor.fetchall()
@@ -101,34 +90,31 @@ def gerar_titulos_pendentes(limite=3):
         conn.close()
         return False
 
-    print(f"\n[Agente 1] Gerando títulos chamativos para {len(pendentes)} leis...")
+    print(f"\n[Agente 1] Gerando títulos chamativos com Gemma 26B para {len(pendentes)} leis...")
 
     for i, (id_noticia, ementa) in enumerate(pendentes):
         titulo, resumo = agente_editor(ementa)
 
         cursor.execute('''
                        UPDATE noticias
-                       SET titulo_vitrine = ?,
-                           resumo_vitrine = ?
-                       WHERE id_noticia = ?
+                       SET titulo_vitrine = %s,
+                           resumo_vitrine = %s
+                       WHERE id_noticia = %s
                        ''', (titulo, resumo, id_noticia))
 
         print(f"  -> Título gerado: {titulo}")
-
-        # Pausa de segurança de 20s para evitar o Erro 429 proativamente
         if i < len(pendentes) - 1:
-            time.sleep(20)
+            time.sleep(5) # Modelos abertos em APIs parrudas costumam exigir menos tempo de pausa
 
     conn.commit()
     conn.close()
     return True
 
-
 def gerar_materia_sob_demanda(id_noticia):
     conn = conectar()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT ementa_oficial, materia_completa FROM noticias WHERE id_noticia = ?", (id_noticia,))
+    cursor.execute("SELECT ementa_oficial, materia_completa FROM noticias WHERE id_noticia = %s", (id_noticia,))
     resultado = cursor.fetchone()
 
     if not resultado:
@@ -137,15 +123,14 @@ def gerar_materia_sob_demanda(id_noticia):
 
     ementa, materia_existente = resultado
 
-    # Se a IA já escreveu antes, devolve do banco instantaneamente
     if materia_existente and materia_existente != "Matéria completa indisponível no momento.":
         conn.close()
         return materia_existente
 
-    print(f"\n[Agente 2] Lendo documento oficial e redigindo matéria exclusiva. Aguarde...")
+    print(f"\n[Agente 2] Lendo documento oficial e redigindo matéria exclusiva com Gemma 26B. Aguarde...")
     nova_materia = agente_jornalista(ementa)
 
-    cursor.execute("UPDATE noticias SET materia_completa = ? WHERE id_noticia = ?", (nova_materia, id_noticia))
+    cursor.execute("UPDATE noticias SET materia_completa = %s WHERE id_noticia = %s", (nova_materia, id_noticia))
     conn.commit()
     conn.close()
 
