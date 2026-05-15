@@ -5,7 +5,7 @@ from groq import Groq
 from database import conectar
 
 # CHAVE API DA SUA PROVEDORA (Ex: Groq)
-CHAVE_API = "AIzaSyDd6NlLGkuw4Q0-gvQDfXySxy6QGhBmO7A"
+CHAVE_API = ""
 client = Groq(api_key=CHAVE_API)
 MODELO_GEMMA = "gemma-4-26b-it" # A tag "it" significa Instruction Tuned
 
