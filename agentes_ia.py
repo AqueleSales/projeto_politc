@@ -3,7 +3,7 @@ from google import genai
 from database import conectar
 
 # CHAVE API AQUI
-CHAVE_API = "AIzaSyC2LZmRhhxGK_Ol0ozGHYBNwjl52et73XI"
+CHAVE_API = "chave_api"
 client = genai.Client(api_key=CHAVE_API)
 
 def agente_editor(ementa):
