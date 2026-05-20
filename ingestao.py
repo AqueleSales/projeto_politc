@@ -1,157 +1,72 @@
-import requests # <-- serve para facilitar o envio de requisições HTTP e API's
-import pandas as pd # <-- serve para manipulação, limpeza, tratamento e análise de dados tabulares estruturá-los em DataFrames
-import urllib3 # <-- Requisições HTTP
-import feedparser  # <-- ler e analisar feeds de notícias e conteúdos web (rss)
-import hashlib  # <-- transformar dados de entrada para gerar um ID numérico único para as notas
-from database import obter_engine_pandas
+import requests
+from database import conectar
 
-# Desativa os avisos de SSL
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+def buscar_projetos_camara(quantidade=15):
+    print("\n📡 Conectando à API de Dados Abertos da Câmara dos Deputados...")
 
-# ==========================================
-# 1. O "PORTEIRO" (Filtro Inteligente e Gratuito)
-# ==========================================
-def eh_assunto_relevante(ementa):
-    if not ementa:
-        return False
+    url = "https://dadosabertos.camara.leg.br/api/v2/proposicoes"
 
-    # LISTA ATUALIZADA: Internacional + Políticas Públicas Nacionais
-    palavras_chave = [
-        # Internacional
-        'sanção', 'sanções', 'embaixada', 'diplomacia', 'acordo bilateral',
-        'tratado', 'embargo', 'relações exteriores', 'onu', 'mercosul', 'guerra',
-        # Políticas Públicas (NOVO)
-        'saúde pública', 'educação', 'previdência', 'segurança pública',
-        'infraestrutura', 'imposto', 'tributário', 'direitos trabalhistas',
-        'meio ambiente', 'saneamento', 'política pública', 'moradia', 'sus'
-    ]
-    ementa_minuscula = ementa.lower()
-
-    for palavra in palavras_chave:
-        if palavra in ementa_minuscula:
-            return True
-    return False
-# ==========================================
-# 2. COLETOR 1: CÂMARA DOS DEPUTADOS (Leis)
-# ==========================================
-def coletar_dados_camara():
-#
-#    Aqui ele busca as ementas da câmara dos deputados no banco dos dados abertos.
-#
-    print("\n[COLETOR 1] -> Buscando projetos na Câmara dos Deputados...")
-    url = "https://dadosabertos.camara.leg.br/api/v2/proposicoes?siglaTipo=PL&ordem=DESC&ordenarPor=id&itens=100&keywords=internacional"
-#
-#   o link do dados aberto, veja que no https tem itens, ali onde vamos decider a quantidade de ementas, pegamos 100 para verifcar
-#
-    try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-        resposta = requests.get(url, headers=headers, verify=False, timeout=10)
-        dados_brutos = resposta.json().get('dados', [])
-
-        dados_filtrados = []
-        for projeto in dados_brutos:
-            ementa = projeto.get('ementa', '')
-            # O Porteiro entra em ação
-            if eh_assunto_relevante(ementa):
-                dados_filtrados.append(projeto)
-
-        if not dados_filtrados:
-            print("  -> Nenhuma lei da Câmara passou no filtro de temas hoje.")
-            return pd.DataFrame()
-
-        df = pd.DataFrame(dados_filtrados)
-        df_renomeado = df.rename(columns={
-            'id': 'id_noticia',
-            'numero': 'numero_lei',
-            'ano': 'ano_lei',
-            'ementa': 'ementa_oficial'
-        })
-
-        df_limpo = df_renomeado[['id_noticia', 'numero_lei', 'ano_lei', 'ementa_oficial']]
-        print(f"  -> {len(df_limpo)} leis passaram no filtro e serão processadas!")
-        return df_limpo
-
-    except Exception as e:
-        print(f"  -> Erro ao conectar com a Câmara: {e}")
-        return pd.DataFrame()
-
-
-# ==========================================
-# 3. COLETOR 2: ITAMARATY (Notas Diplomáticas)
-# ==========================================
-def coletar_dados_itamaraty():
-    print("\n[COLETOR 2] -> Buscando notas diplomáticas no Itamaraty (MRE)...")
-
-    # URL oficial do RSS de Notas à Imprensa do Itamaraty
-    url_rss = "https://www.gov.br/mre/pt-br/canais_atendimento/imprensa/notas-a-imprensa/RSS"
+    params = {
+        "siglaTipo": "PL",
+        "itens": quantidade,
+        "ordem": "DESC",
+        "ordenarPor": "id"
+    }
 
     try:
-        feed = feedparser.parse(url_rss)
-        dados_filtrados = []
-
-        if not feed.entries:
-            print("  -> Nenhuma nota encontrada no feed do Itamaraty.")
-            return pd.DataFrame()
-
-        for nota in feed.entries:
-            # Juntamos o título e o resumo da nota para formar a "ementa"
-            texto_nota = f"{nota.title} - {nota.summary}"
-
-            # O mesmo porteiro avalia as notas do Itamaraty!
-            if eh_assunto_relevante(texto_nota):
-                # Como o RSS não tem um ID numérico, criamos um ID único baseado no link da nota
-                id_unico = int(hashlib.md5(nota.link.encode()).hexdigest()[:8], 16)
-
-                # Pegamos o ano atual
-                ano_atual = pd.Timestamp.now().year
-
-                dados_filtrados.append({
-                    'id_noticia': id_unico,
-                    'numero_lei': 'NOTA_MRE',  # Disfarce para caber no seu banco!
-                    'ano_lei': ano_atual,
-                    'ementa_oficial': texto_nota
-                })
-
-        if not dados_filtrados:
-            print("  -> Nenhuma nota do Itamaraty passou no filtro de temas hoje.")
-            return pd.DataFrame()
-
-        df_limpo = pd.DataFrame(dados_filtrados)
-        print(f"  -> {len(df_limpo)} notas do Itamaraty passaram no filtro!")
-        return df_limpo
-
+        resposta = requests.get(url, params=params)
+        resposta.raise_for_status()
+        dados = resposta.json()['dados']
+        return dados
     except Exception as e:
-        print(f"  -> Erro ao ler o feed do Itamaraty: {e}")
-        return pd.DataFrame()
+        print(f"❌ Erro ao buscar dados na API da Câmara: {e}")
+        return []
 
+def popular_banco():
+    projetos = buscar_projetos_camara(quantidade=10)
 
-# ==========================================
-# 4. FUNÇÕES DE BANCO DE DADOS
-# ==========================================
-def salvar_noticias(df):
-    if df.empty: return
-    try:
-        # Agora o Pandas fala direto com a nuvem pelo SQLAlchemy
-        engine = obter_engine_pandas()
-        df.to_sql('noticias', engine, if_exists='append', index=False)
-        print(f"  -> Sucesso! {len(df)} registros salvos na NUVEM na tabela 'noticias'.")
-    except Exception as e:
-        print(f"  -> Lei já existe no banco ou erro: {e}")
+    if not projetos:
+        print("Nenhum dado retornado da API.")
+        return
 
+    conn = conectar()
+    cursor = conn.cursor()
+    novos_inseridos = 0
 
-def executar_ingestao():
-    print("Iniciando varredura multicanal do Governo...")
+    print("🔍 Processando as ementas e verificando duplicatas...")
 
-    # 1. Puxa e salva da Câmara
-    df_camara = coletar_dados_camara()
-    salvar_noticias(df_camara)
+    for proj in projetos:
+        # AGORA CAPTURAMOS O ID OFICIAL DA API
+        id_noticia = proj['id']
+        numero_lei = str(proj['numero'])
+        ano_lei = proj['ano']
+        ementa_oficial = proj['ementa']
 
-    # 2. Puxa e salva do Itamaraty
-    df_itamaraty = coletar_dados_itamaraty()
-    salvar_noticias(df_itamaraty)
+        if not ementa_oficial:
+            continue
 
-    print("\nVarredura concluída!")
+        # Usamos o id_noticia para verificar se já existe (é mais rápido e seguro)
+        cursor.execute("SELECT COUNT(*) FROM noticias WHERE id_noticia = %s", (id_noticia,))
+        existe = cursor.fetchone()[0]
 
+        if existe == 0:
+            # INCLUÍMOS O id_noticia NO INSERT
+            cursor.execute('''
+                           INSERT INTO noticias (id_noticia, numero_lei, ano_lei, ementa_oficial)
+                           VALUES (%s, %s, %s, %s)
+                           ''', (id_noticia, numero_lei, ano_lei, ementa_oficial))
+
+            novos_inseridos += 1
+            print(f"   ✅ Novo PL Inserido: {numero_lei}/{ano_lei} (ID: {id_noticia})")
+        else:
+            print(f"   ⏭️ PL {numero_lei}/{ano_lei} já existe no banco Neon. Pulando...")
+
+    conn.commit()
+    conn.close()
+
+    print(f"\n🎉 Ingestão concluída! {novos_inseridos} novas leis foram adicionadas ao banco de dados.")
+    if novos_inseridos > 0:
+        print("🤖 Dica: Agora você já pode rodar seus Agentes de IA para gerar os títulos e matérias dessas novas leis!")
 
 if __name__ == "__main__":
-    executar_ingestao()
+    popular_banco()

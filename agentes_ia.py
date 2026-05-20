@@ -1,62 +1,61 @@
 import time
 import json
-# pip install groq (ou a biblioteca da provedora que for hospedar o Gemma)
-from groq import Groq 
+from groq import Groq
 from database import conectar
 
-# CHAVE API DA SUA PROVEDORA (Ex: Groq)
-CHAVE_API = ""
+# CHAVE DA GROQ (A mesma que você usou no simulador)
+CHAVE_API = "Cahve-api-do-groq"
 client = Groq(api_key=CHAVE_API)
-MODELO_GEMMA = "gemma-4-26b-it" # A tag "it" significa Instruction Tuned
+
+# O Llama 3.1 da Meta (Gratuito, ultra-rápido e estável)
+MODELO_GROQ = "llama-3.1-8b-instant"
+
 
 def agente_editor(ementa):
-    # 1. MODO SYSTEM PROMPT (A personalidade inquebrável da IA)
     system_prompt = """Você é um editor-chefe de um portal de notícias focado em Políticas Públicas.
-Sua tarefa é retornar APENAS um JSON válido contendo duas chaves:
-1. "titulo": Um título curto e chamativo (máx 8 palavras).
-2. "resumo": Um resumo simples e direto para o cidadão comum (máx 3 frases)."""
+    Sua tarefa é retornar APENAS um JSON válido contendo duas chaves:
+    1. "titulo": Um título curto e chamativo (máx 8 palavras). É ESTRITAMENTE PROIBIDO O USO DE EMOJIS.
+    2. "resumo": Um resumo simples, formal e direto para o cidadão comum (máx 3 frases). É ESTRITAMENTE PROIBIDO O USO DE EMOJIS."""
 
-    # 2. MODO USER (Apenas os dados brutos)
     user_prompt = f"Ementa original:\n{ementa}"
 
     for tentativa in range(3):
         try:
             response = client.chat.completions.create(
-                model=MODELO_GEMMA,
+                model=MODELO_GROQ,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                # 3. FUNCTION CALLING / NATIVE JSON: Força a saída estruturada
-                response_format={"type": "json_object"} 
+                # Forçando a saída limpa em JSON na Groq
+                response_format={"type": "json_object"}
             )
-            
-            # Pega o texto puro e converte direto para Dicionário Python
+
             conteudo = response.choices[0].message.content
             dados = json.loads(conteudo)
-            
+
             return dados.get("titulo", "Título Indisponível"), dados.get("resumo", "Resumo não gerado.")
 
         except Exception as e:
-            print(f"      ⚠️ Erro no modelo ou limite atingido. Respirando 10s... ({tentativa + 1}/3) | Erro: {e}")
+            print(f"      ⚠️ Erro no modelo. Respirando 10s... ({tentativa + 1}/3) | Erro: {e}")
             time.sleep(10)
 
     return "Título Indisponível", "Resumo Indisponível"
 
+
 def agente_jornalista(ementa):
-    system_prompt = """Você é um jornalista investigativo especializado em Políticas Públicas.
-A sua prioridade absoluta é explicar o IMPACTO NA VIDA DO CIDADÃO: 
-Como essa lei muda o dia a dia do brasileiro? Vai afetar o bolso, a saúde, a segurança ou o trabalho das pessoas?
-Use uma linguagem clara, sem jargões jurídicos. Seja imparcial, mas mostre os prós e contras práticos.
-Escreva uma matéria envolvente de 3 a 4 parágrafos."""
+    system_prompt = """Você é um experiente jornalista investigativo especializado em Políticas Públicas.
+    A sua prioridade absoluta é explicar o IMPACTO NA VIDA DO CIDADÃO: Como essa lei muda o dia a dia do brasileiro?
+    Use uma linguagem clara, tom jornalístico, sério e formal. É ESTRITAMENTE PROIBIDO O USO DE EMOJIS em qualquer parte do texto.
+    Seja imparcial, mas mostre os prós e contras práticos. Escreva uma matéria envolvente de 3 a 4 parágrafos."""
 
     user_prompt = f"Escreva a matéria para a seguinte ementa:\n{ementa}"
 
     for tentativa in range(3):
         try:
-            # 4. CONTEXTO ESTENDIDO: O Gemma lê a ementa inteira com facilidade aqui
+            # Aqui não usamos o response_format porque queremos texto normal, não JSON
             response = client.chat.completions.create(
-                model=MODELO_GEMMA,
+                model=MODELO_GROQ,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -65,16 +64,11 @@ Escreva uma matéria envolvente de 3 a 4 parágrafos."""
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            print(f"      ⚠️ Erro no modelo ou limite atingido. Respirando 15s... ({tentativa + 1}/3) | Erro: {e}")
+            print(f"      ⚠️ Erro no modelo. Respirando 15s... ({tentativa + 1}/3) | Erro: {e}")
             time.sleep(15)
 
     return "Matéria completa indisponível no momento."
 
-
-# =====================================================================
-# AS FUNÇÕES DE BANCO DE DADOS ABAIXO CONTINUAM EXATAMENTE IGUAIS
-# O Python só manda os dados pra IA e grava no Neon do mesmo jeito!
-# =====================================================================
 
 def gerar_titulos_pendentes(limite=3):
     conn = conectar()
@@ -90,7 +84,7 @@ def gerar_titulos_pendentes(limite=3):
         conn.close()
         return False
 
-    print(f"\n[Agente 1] Gerando títulos chamativos com Gemma 26B para {len(pendentes)} leis...")
+    print(f"\n[Agente 1] Gerando títulos chamativos com Llama 3.1 para {len(pendentes)} leis...")
 
     for i, (id_noticia, ementa) in enumerate(pendentes):
         titulo, resumo = agente_editor(ementa)
@@ -104,11 +98,12 @@ def gerar_titulos_pendentes(limite=3):
 
         print(f"  -> Título gerado: {titulo}")
         if i < len(pendentes) - 1:
-            time.sleep(5) # Modelos abertos em APIs parrudas costumam exigir menos tempo de pausa
+            time.sleep(3)  # A Groq processa tudo super rápido, 3s de pausa já basta
 
     conn.commit()
     conn.close()
     return True
+
 
 def gerar_materia_sob_demanda(id_noticia):
     conn = conectar()
@@ -127,7 +122,7 @@ def gerar_materia_sob_demanda(id_noticia):
         conn.close()
         return materia_existente
 
-    print(f"\n[Agente 2] Lendo documento oficial e redigindo matéria exclusiva com Gemma 26B. Aguarde...")
+    print(f"\n[Agente 2] Lendo documento oficial e redigindo matéria exclusiva com Llama 3.1. Aguarde...")
     nova_materia = agente_jornalista(ementa)
 
     cursor.execute("UPDATE noticias SET materia_completa = %s WHERE id_noticia = %s", (nova_materia, id_noticia))

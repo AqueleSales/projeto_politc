@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REDO - Leis da República</title>
+    <title>eREDO - Leis da República</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -15,10 +15,10 @@
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="#" class="active">Visão Geral<sup>01</sup></a></li>
-                    <li><a href="#">Projetos de Lei<sup>02</sup></a></li>
-                    <li><a href="#">Fórum<sup>03</sup></a></li>
-                    <li><a href="#">Dashboard<sup>04</sup></a></li>
+                    <li><a href="#" class="nav-link active" data-target="visao-geral">Visão Geral<sup>01</sup></a></li>
+                    <li><a href="#" class="nav-link" data-target="feed-noticias-section">Projetos de Lei<sup>02</sup></a></li>
+                    <li><a href="#" class="nav-link" data-target="forum-section">Fórum<sup>03</sup></a></li>
+                    <li><a href="#" class="nav-link" data-target="dashboard-section">Dashboard<sup>04</sup></a></li>
                 </ul>
             </nav>
             <div class="footer-nav">
@@ -36,31 +36,63 @@
                 </div>
             </section>
 
-            <section class="about-section">
-                <div class="about-grid">
-                    <div class="about-title">
-                        <h2>Visão<br>Geral</h2>
-                        <div class="megaphone-placeholder">📣</div>
+            <div id="visao-geral" class="tab-content active">
+                <section class="about-section">
+                    <div class="about-grid">
+                        <div class="about-title">
+                            <h2>Visão<br>Geral</h2>
+                            <div class="megaphone-placeholder">📣</div>
+                        </div>
+                        <div class="about-text">
+                            <p>Este portal foi desenvolvido para traduzir a complexidade do cenário legislativo em informações claras e acessíveis, garantindo transparência e compreensão de novos projetos de lei, independentemente do nível de conhecimento técnico do usuário.</p>
+                            <p>Em sua essência, o projeto foca na precisão dos dados oficiais e na clareza do impacto social — nossa missão é conectar as decisões governamentais à realidade do trabalhador. Este sistema organiza diretrizes, votações e debates, permitindo que a sociedade civil avalie consequências e participe ativamente da fiscalização democrática.</p>
+                        </div>
                     </div>
-                    <div class="about-text">
-                        <p>Este portal foi desenvolvido para traduzir a complexidade do cenário legislativo em informações claras e acessíveis, garantindo transparência e compreensão de novos projetos de lei, independentemente do nível de conhecimento técnico do usuário.</p>
-                        <p>Em sua essência, o projeto foca na precisão dos dados oficiais e na clareza do impacto social — nossa missão é conectar as decisões governamentais à realidade do trabalhador. Este sistema organiza diretrizes, votações e debates, permitindo que a sociedade civil avalie consequências e participe ativamente da fiscalização democrática.</p>
+                </section>
+            </div>
+
+            <div id="feed-noticias-section" class="tab-content">
+                <section class="news-section">
+                    <h2>Novidades Legislativas</h2>
+                    <div id="feed-noticias" class="news-grid">
+                        <div class="loading">Buscando atualizações na Câmara...</div>
                     </div>
-                </div>
-            </section>
 
-            <section class="news-section">
-                <h2>Novidade</h2>
-                <div id="feed-noticias" class="news-grid">
-                    <div class="loading">Buscando atualizações na Câmara...</div>
-                </div>
+                    <div class="paginacao">
+                        <button id="btn-anterior" disabled>Anterior</button>
+                        <span id="pagina-atual">1</span>
+                        <button id="btn-proximo">Próximo</button>
+                    </div>
+                </section>
+            </div>
 
-                <div class="paginacao">
-                    <button id="btn-anterior" disabled>Anterior</button>
-                    <span id="pagina-atual">1</span>
-                    <button id="btn-proximo">Próximo</button>
-                </div>
-            </section>
+            <div id="forum-section" class="tab-content">
+                <section class="forum-page-section">
+                    <h2>Fórum de Debate Público</h2>
+                    <p class="section-subtitle">Opiniões e análise de impacto geradas dinamicamente pela população simulada.</p>
+
+                    <div id="container-comentarios-forum" class="forum-comments-grid">
+                        <div class="loading">Selecione uma lei ou carregando debates recentes...</div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="dashboard-section" class="tab-content">
+                <section class="dashboard-page-section">
+                    <h2>Métricas Legislativas e Opinião</h2>
+                    <p class="section-subtitle">Análise estatística em tempo real coletada a partir do banco de dados Neon.</p>
+
+                    <div class="dashboard-chart-card">
+                        <img src="/api/dashboard.png" alt="Gráfico de Impacto por Perfil Social" class="dynamic-chart-img" id="dashboard-chart">
+                    </div>
+
+                    <div class="dashboard-refresh-area">
+                        <button onclick="document.getElementById('dashboard-chart').src='/api/dashboard.png?t=' + new Date().getTime();" class="btn-refresh">
+                            🔄 Atualizar Gráfico
+                        </button>
+                    </div>
+                </section>
+            </div>
         </main>
     </div>
 
