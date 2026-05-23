@@ -1,8 +1,8 @@
 :root {
     --bg-color: #FFFFFF;
     --text-main: #1A1A1A;
-    --yellow-hero: #F4C430; /* O amarelo do seu design */
-    --gray-card: #E2E2E2; /* O cinza das caixas de novidade */
+    --yellow-hero: #F4C430;
+    --gray-card: #E2E2E2;
     --sidebar-width: 250px;
     --border-color: #EAEAEA;
 }
@@ -20,7 +20,7 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar Esquerda */
+/* --- BARRA LATERAL ESQUERDA --- */
 .sidebar {
     width: var(--sidebar-width);
     position: fixed;
@@ -79,20 +79,18 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* Conteúdo Principal */
+/* --- CONTEÚDO PRINCIPAL --- */
 .content-area {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
 }
 
-/* Hero Section (Amarela) */
 .hero-section {
     background-color: var(--yellow-hero);
     height: 400px;
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Aqui você adiciona o background-image depois */
 }
 
 .hero-content h1 {
@@ -141,35 +139,7 @@ body {
     margin-bottom: 2rem;
 }
 
-.news-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
-}
-
-.card-noticia {
-    background-color: var(--gray-card);
-    aspect-ratio: 4 / 3;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.card-noticia:hover {
-    transform: translateY(-5px);
-    background-color: #D5D5D5;
-}
-
-.card-noticia h3 {
-    font-size: 1.1rem;
-    margin: 0;
-    line-height: 1.4;
-}
-
-/* Paginação Minimalista */
+/* Paginação */
 .paginacao {
     margin-top: 3rem;
     display: flex;
@@ -192,58 +162,7 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0; width: 100%; height: 100%;
-    background-color: rgba(255,255,255,0.95);
-}
-
-.modal-content {
-    background-color: var(--bg-color);
-    margin: 5% auto;
-    padding: 4rem;
-    border: 1px solid #000;
-    width: 70%;
-    max-width: 800px;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-}
-
-.tag-modal {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: var(--yellow-hero);
-    display: block;
-    margin-bottom: 1rem;
-}
-
-#modal-titulo {
-    font-size: 2.5rem;
-    line-height: 1.1;
-    margin-top: 0;
-    letter-spacing: -1px;
-}
-
-#modal-texto {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #333;
-}
-
-.close-btn {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    font-size: 2rem;
-    cursor: pointer;
-}
-
-/* --- CONTROLE DE ABAS DO DASHBOARD --- */
+/* Controle de Abas */
 .tab-content {
     display: none;
     animation: fadeIn 0.4s ease-in-out;
@@ -253,34 +172,41 @@ button:disabled {
     display: block;
 }
 
-/* Efeito suave ao trocar de tela */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- PADRONIZAÇÃO DOS CARDS DE NOTÍCIAS --- */
+#feed-noticias {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
 .card-noticia {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    height: 320px; /* Trava a altura de todos os cards */
+    height: 320px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     overflow: hidden;
     transition: transform 0.2s;
+    cursor: pointer;
 }
 
 .card-noticia:hover {
     transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 .card-noticia h3 {
     margin: 15px 15px 5px 15px;
     font-size: 1.1em;
     color: #2d3748;
-    /* Limita o título a 2 linhas para não quebrar o layout */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -288,8 +214,142 @@ button:disabled {
 }
 
 .card-noticia p {
-    margin: auto 15px 15px 15px; /* Empurra o botão "Ler Análise" sempre pro fundo */
+    margin: auto 15px 15px 15px;
     font-size: 0.85em;
     color: #3182ce;
     font-weight: 600;
+}
+
+
+/* ======================================================== */
+/* --- ESTILOS DO NOVO MODO DE LEITURA (SEU DESENHO) --- */
+/* ======================================================== */
+
+.leitura-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px; /* Esquerda fluida, Direita fixa em 380px */
+    gap: 40px;
+    padding: 30px;
+    align-items: start; /* Para as colunas não esticarem para baixo forçadas */
+}
+
+/* --- COLUNA DA MATÉRIA (ESQUERDA) --- */
+.materia-banner-img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 3px solid #3182ce; /* Borda azul simulando o seu desenho */
+    margin-bottom: 15px;
+}
+
+.btn-voltar {
+    background: none;
+    border: none;
+    color: #000;
+    font-weight: bold;
+    font-size: 1.1em;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-voltar:hover {
+    color: #3182ce;
+}
+
+#materia-titulo {
+    font-size: 3em; /* Título gigante como no desenho */
+    letter-spacing: -1px;
+    color: #000;
+    margin-bottom: 30px;
+}
+
+.texto-artigo {
+    font-size: 1.15em;
+    line-height: 1.8;
+    color: #333;
+    text-align: justify;
+}
+
+.tag-modal {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--yellow-hero);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* --- COLUNA DE FERRAMENTAS (DIREITA) --- */
+.coluna-ferramentas {
+    position: sticky; /* Faz a barra direita rolar junto e parar no topo */
+    top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ferramenta-box {
+    border: 2px solid #000; /* Caixas grossas igual ao seu rascunho */
+    border-radius: 8px;
+    padding: 20px;
+    background: #fff;
+}
+
+.ferramenta-box h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: #000;
+}
+
+/* Feedback */
+.feedback-input {
+    width: 100%;
+    height: 80px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: none;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    font-family: inherit;
+}
+
+.btn-enviar-feedback {
+    width: 100%;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 20px; /* Botão arredondado igual no rascunho */
+    font-weight: bold;
+    padding: 8px;
+}
+
+.btn-enviar-feedback:hover {
+    background: #f0f0f0;
+}
+
+/* Chart */
+.chart-img-lateral {
+    width: 100%;
+    border-radius: 50%; /* Faz o gráfico ficar redondo se precisar */
+}
+
+/* Forum */
+.forum-lateral {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.comentario-card {
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
 }

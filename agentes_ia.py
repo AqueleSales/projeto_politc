@@ -4,7 +4,7 @@ from groq import Groq
 from database import conectar
 
 # CHAVE DA GROQ (A mesma que você usou no simulador)
-CHAVE_API = "Cahve-api-do-groq"
+CHAVE_API = ""
 client = Groq(api_key=CHAVE_API)
 
 # O Llama 3.1 da Meta (Gratuito, ultra-rápido e estável)
