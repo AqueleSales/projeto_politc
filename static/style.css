@@ -1,10 +1,23 @@
+/* Importando as fontes (Inter para textos rápidos, Playfair para a pegada Chapaza) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&display=swap');
+
+/* ======================================================== */
+/* --- PALETA DANDADAN & REDEFINIÇÕES GERAIS --- */
+/* ======================================================== */
 :root {
-    --bg-color: #FFFFFF;
-    --text-main: #1A1A1A;
-    --yellow-hero: #F4C430;
-    --gray-card: #E2E2E2;
-    --sidebar-width: 250px;
-    --border-color: #EAEAEA;
+    --bg-color: #FDFBF7; /* Fundo Creme */
+
+    /* AS CORES DO DANDADAN */
+    --text-main: #46334F; /* O Roxo escuro/preto absoluto do Dandadan */
+    --yellow-hero: #F2C230; /* Amarelo vibrante Dandadan */
+    --accent-orange: #F24F13; /* Laranja escuro Dandadan */
+    --accent-light-orange: #F2921D; /* Laranja claro Dandadan */
+    --muted-purple: #8082A6; /* O roxo/cinza suave do Dandadan */
+
+    --gray-card: #EAEAEA;
+    --sidebar-width: 260px;
+    --border-color: #8082A6; /* Usando o roxo suave como linha de grade */
+    --card-bg: #FFFFFF;
 }
 
 body {
@@ -13,6 +26,7 @@ body {
     color: var(--text-main);
     margin: 0;
     padding: 0;
+    line-height: 1.6;
 }
 
 .layout-wrapper {
@@ -20,7 +34,9 @@ body {
     min-height: 100vh;
 }
 
-/* --- BARRA LATERAL ESQUERDA --- */
+/* ======================================================== */
+/* --- BARRA LATERAL (MENU) --- */
+/* ======================================================== */
 .sidebar {
     width: var(--sidebar-width);
     position: fixed;
@@ -28,15 +44,15 @@ body {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    background: #fff;
+    background: var(--bg-color); /* Fundo acompanhando o resto */
     z-index: 10;
 }
 
 .logo-area {
-    padding: 2rem 1.5rem;
-    font-size: 1.5rem;
+    padding: 2.5rem 2rem;
+    font-size: 1.8rem;
     font-weight: 800;
-    letter-spacing: -1px;
+    letter-spacing: -1.5px;
 }
 
 .main-nav ul, .footer-nav ul {
@@ -47,309 +63,488 @@ body {
 
 .main-nav li a {
     display: block;
-    padding: 0.8rem 1.5rem;
+    padding: 1rem 2rem;
     color: var(--text-main);
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    border-right: 3px solid transparent; /* Preparando o efeito da aba ativa */
 }
 
-.main-nav li a:hover, .main-nav li a.active {
-    background-color: #F5F5F5;
+.main-nav li a:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.main-nav li a.active {
+    background-color: rgba(26, 86, 219, 0.05); /* Fundo leve azulado */
+    border-right-color: var(--text-main); /* Linha grossa marcando a seção */
 }
 
 .main-nav sup {
     font-size: 0.6rem;
     color: #888;
-    margin-left: 4px;
+    margin-left: 6px;
+    font-weight: 400;
 }
 
 .footer-nav {
     margin-top: auto;
-    padding: 2rem 1.5rem;
+    padding: 2rem;
     border-top: 1px solid var(--border-color);
 }
 
 .footer-nav a {
-    color: #666;
+    color: #6B7280;
     text-decoration: none;
     font-size: 0.8rem;
     display: block;
     margin-bottom: 0.5rem;
+    transition: color 0.2s;
 }
 
-/* --- CONTEÚDO PRINCIPAL --- */
+.footer-nav a:hover {
+    color: var(--text-main);
+}
+
+/* ======================================================== */
+/* --- ÁREA CENTRAL E "VISÃO GERAL" --- */
+/* ======================================================== */
 .content-area {
     margin-left: var(--sidebar-width);
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
+/* O Mega Banner Amarelo */
 .hero-section {
     background-color: var(--yellow-hero);
-    height: 400px;
+    min-height: 450px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-bottom: 1px solid var(--text-main);
+}
+
+.hero-content {
+    text-align: center;
+    padding: 0 20px;
 }
 
 .hero-content h1 {
-    font-size: 3rem;
+    font-size: 4rem;
+    font-weight: 900;
     letter-spacing: -2px;
+    margin: 0;
+    color: var(--text-main);
 }
 
-/* Visão Geral */
+.hero-subtitle {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-main);
+    max-width: 600px;
+    margin: 15px auto 0 auto;
+    opacity: 0.9;
+}
+
+/* Seção de Texto (Brutalista) */
 .about-section {
-    padding: 4rem 3rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 5rem 4rem;
 }
 
 .about-grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: 4rem;
+    gap: 5rem;
     max-width: 1000px;
 }
 
 .about-title h2 {
-    font-size: 3.5rem;
-    line-height: 1.1;
-    letter-spacing: -1.5px;
+    font-size: 4rem;
+    line-height: 1;
+    letter-spacing: -2px;
     margin: 0 0 2rem 0;
+    font-weight: 800;
 }
 
 .megaphone-placeholder {
-    font-size: 6rem;
-    opacity: 0.8;
+    font-size: 5rem;
+    opacity: 0.9;
 }
 
 .about-text {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #444;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #4A5568;
 }
 
-/* Novidades (Notícias) */
-.news-section {
-    padding: 4rem 3rem;
-}
-
-.news-section h2 {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-/* Paginação */
-.paginacao {
-    margin-top: 3rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-button {
-    background: none;
-    border: 1px solid #000;
-    padding: 0.5rem 1.5rem;
-    font-family: inherit;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-button:disabled {
-    border-color: #CCC;
-    color: #CCC;
-    cursor: not-allowed;
-}
-
-/* Controle de Abas */
+/* Controle de Abas Dinâmicas */
 .tab-content {
     display: none;
     animation: fadeIn 0.4s ease-in-out;
 }
-
 .tab-content.active {
     display: block;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- PADRONIZAÇÃO DOS CARDS DE NOTÍCIAS --- */
+/* ======================================================== */
+/* --- GRID DE NOTÍCIAS (FEED) --- */
+/* ======================================================== */
+.news-section {
+    padding: 3rem 4rem;
+}
+
+.news-section h2 {
+    font-size: 2rem;
+    letter-spacing: -1px;
+    font-weight: 800;
+}
+
 #feed-noticias {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Auto-adapta cards de ~320px */
+    gap: 30px; /* Mais respiro entre os cards */
     padding: 20px 0;
 }
 
 .card-noticia {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    height: 320px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    height: 380px; /* Cards um pouco mais altos */
+    background: var(--card-bg);
+    border: 1px solid var(--border-color); /* Linha fina e elegante */
+    border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Sombra difusa */
+    animation: fadeInUp 0.6s ease-out forwards; /* Animação de entrada */
 }
 
 .card-noticia:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .card-noticia h3 {
-    margin: 15px 15px 5px 15px;
-    font-size: 1.1em;
-    color: #2d3748;
+    margin: 20px 20px 10px 20px;
+    font-size: 1.25em;
+    font-weight: 800;
+    color: var(--text-main);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3; /* Permite até 3 linhas pro título */
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
 }
 
 .card-noticia p {
-    margin: auto 15px 15px 15px;
-    font-size: 0.85em;
-    color: #3182ce;
-    font-weight: 600;
+    margin: auto 20px 20px 20px;
+    font-size: 0.9em;
+    color: var(--accent-blue);
+    font-weight: 700;
 }
 
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
 /* ======================================================== */
-/* --- ESTILOS DO NOVO MODO DE LEITURA (SEU DESENHO) --- */
+/* --- MODO LEITURA DA MATÉRIA (ESTILO JORNAL) --- */
 /* ======================================================== */
-
 .leitura-grid {
     display: grid;
-    grid-template-columns: 1fr 380px; /* Esquerda fluida, Direita fixa em 380px */
-    gap: 40px;
-    padding: 30px;
-    align-items: start; /* Para as colunas não esticarem para baixo forçadas */
+    grid-template-columns: 1fr 380px;
+    gap: 60px; /* Muito respiro */
+    padding: 40px 60px;
+    align-items: start;
 }
 
-/* --- COLUNA DA MATÉRIA (ESQUERDA) --- */
 .materia-banner-img {
     width: 100%;
-    height: 300px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 3px solid #3182ce; /* Borda azul simulando o seu desenho */
-    margin-bottom: 15px;
+    height: 350px;
+    object-fit: cover; /* "cover" é melhor que "fill" para não distorcer fotos */
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid var(--border-color);
 }
 
 .btn-voltar {
     background: none;
     border: none;
-    color: #000;
-    font-weight: bold;
-    font-size: 1.1em;
+    color: var(--text-main);
+    font-weight: 800;
+    font-size: 1em;
     cursor: pointer;
     padding: 0;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-voltar:hover {
-    color: #3182ce;
+    color: var(--accent-blue);
 }
 
 #materia-titulo {
-    font-size: 3em; /* Título gigante como no desenho */
-    letter-spacing: -1px;
-    color: #000;
+    font-size: 3.5em;
+    letter-spacing: -1.5px;
+    color: var(--text-main);
     margin-bottom: 30px;
+    line-height: 1.1;
+    font-weight: 900;
+    font-family: 'Playfair Display', serif; /* Pegada Chapaza */
+    text-align: center; /* Centraliza o títuloão */
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tag-modal {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--yellow-hero);
+    display: block;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
 }
 
 .texto-artigo {
     font-size: 1.15em;
     line-height: 1.8;
-    color: #333;
+    color: var(--text-main);
+    font-family: 'Playfair Display', serif; /* Pegada Chapaza */
     text-align: justify;
+    max-width: 750px;
+    margin: 0 auto; /* Centraliza o bloco de texto embaixo do banner */
 }
 
-.tag-modal {
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: var(--yellow-hero);
-    display: block;
-    margin-bottom: 0.5rem;
+.texto-artigo p {
+    margin-bottom: 1.6em;
 }
 
-/* --- COLUNA DE FERRAMENTAS (DIREITA) --- */
+/* ======================================================== */
+/* --- COLUNA DIREITA (DASHBOARD E FERRAMENTAS) --- */
+/* ======================================================== */
 .coluna-ferramentas {
-    position: sticky; /* Faz a barra direita rolar junto e parar no topo */
-    top: 30px;
+    position: sticky;
+    top: 40px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
 
 .ferramenta-box {
-    border: 2px solid #000; /* Caixas grossas igual ao seu rascunho */
-    border-radius: 8px;
-    padding: 20px;
-    background: #fff;
+    border: 2px solid var(--text-main); /* Linha escura grossa e agressiva */
+    border-radius: 12px;
+    padding: 25px;
+    background: var(--card-bg);
+    box-shadow: 4px 4px 0px var(--text-main); /* Efeito 3D Brutalista */
 }
 
 .ferramenta-box h3 {
     margin-top: 0;
     margin-bottom: 15px;
-    font-size: 1.2em;
-    color: #000;
+    font-size: 1.3em;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
 }
 
-/* Feedback */
+/* Feedback (Estrelas) */
+.star-btn {
+    opacity: 0.2;
+    transition: 0.2s;
+    font-size: 1.4em;
+}
+.star-btn.active {
+    filter: drop-shadow(0 0 5px var(--yellow-hero));
+    opacity: 1 !important;
+}
+
 .feedback-input {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1em;
+    color: var(--text-main);
     width: 100%;
-    height: 80px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    height: 90px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     resize: none;
-    padding: 10px;
+    padding: 15px;
     box-sizing: border-box;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     font-family: inherit;
+    font-size: 0.9em;
+    background: #FAFAFA;
 }
 
 .btn-enviar-feedback {
     width: 100%;
-    background: #fff;
-    border: 2px solid #000;
-    border-radius: 20px; /* Botão arredondado igual no rascunho */
-    font-weight: bold;
-    padding: 8px;
+    background: var(--text-main);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
 .btn-enviar-feedback:hover {
-    background: #f0f0f0;
+    background: var(--accent-blue);
 }
 
-/* Chart */
+/* Chart Pizza */
 .chart-img-lateral {
     width: 100%;
-    border-radius: 50%; /* Faz o gráfico ficar redondo se precisar */
 }
 
-/* Forum */
+/* Barras Google */
+.google-ranking-container {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.nota-linha {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.85em;
+    color: #4A5568;
+}
+
+.nota-numero {
+    width: 20px;
+    font-weight: 800;
+}
+
+.nota-barra-fundo {
+    flex-grow: 1;
+    height: 12px;
+    background-color: var(--gray-card);
+    border-radius: 6px;
+    margin: 0 12px;
+    overflow: hidden;
+}
+
+.nota-barra-fill {
+    height: 100%;
+    background-color: var(--yellow-hero); /* Usando o mostarda do tema */
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 6px;
+}
+
+/* Fórum */
 .forum-lateral {
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding-right: 10px;
+}
+
+/* Barra de rolagem customizada */
+.forum-lateral::-webkit-scrollbar {
+    width: 6px;
+}
+.forum-lateral::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
 }
 
 .comentario-card {
-    border: 1px solid #e2e8f0;
-    padding: 12px;
-    margin-bottom: 10px;
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    margin-bottom: 12px;
     border-radius: 8px;
-    background-color: #f9f9f9;
+    background-color: var(--bg-color);
+}
+
+/* ======================================================== */
+/* --- ANIMAÇÕES DE CARREGAMENTO (Skeletons & Spinner) --- */
+/* ======================================================== */
+
+.skeleton-card {
+    height: 380px;
+    background: var(--gray-card);
+    border-radius: 12px;
+    background-image: linear-gradient(90deg, #EAEAEA 0px, #F5F5F5 40px, #EAEAEA 80px);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+.skeleton-text {
+    height: 20px;
+    background: var(--gray-card);
+    border-radius: 4px;
+    background-image: linear-gradient(90deg, #EAEAEA 0px, #F5F5F5 40px, #EAEAEA 80px);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    margin-bottom: 12px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* SPINNER RETRO-MODERNO PARA A MATÉRIA */
+.spinner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    color: var(--text-main);
+}
+
+.retro-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-blue); /* Usa o azul vibrante girando */
+    border-radius: 50%;
+    animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+    margin-bottom: 25px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-texto {
+    font-size: 1.1em;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+}
+
+.star-rating-picker {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+    color: var(--muted-purple);
+}
+
+#nota-selecionada-display {
+    margin-top: 4px; /* Desce o texto um pouquinho para alinhar com o centro das estrelas */
+    font-size: 0.75em;
+    font-weight: 600;
 }

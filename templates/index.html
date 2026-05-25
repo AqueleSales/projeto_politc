@@ -10,7 +10,6 @@
 <body>
     <div class="layout-wrapper">
         
-        <!-- BARRA ESQUERDA FIXA (MENU) -->
         <aside class="sidebar">
             <div class="logo-area">
                 <h2>eREDO</h2>
@@ -29,12 +28,8 @@
             </div>
         </aside>
 
-        <!-- ÁREA CENTRAL DINÂMICA -->
         <main class="content-area">
 
-            <!-- ========================================== -->
-            <!-- TELA 1: SITE NORMAL (Hero + Abas)          -->
-            <!-- ========================================== -->
             <div id="view-normal">
                 <section class="hero-section" id="hero-topo">
                      <div class="hero-content">
@@ -59,63 +54,63 @@
 
                 <div id="feed-noticias-section" class="tab-content">
                     <section class="news-section">
-                        <h2>Novidades Legislativas</h2>
-                        <div id="feed-noticias" class="news-grid">
-                            <div class="loading">Buscando atualizações na Câmara...</div>
-                        </div>
-                        <div class="paginacao">
-                            <button id="btn-anterior" disabled>Anterior</button>
-                            <span id="pagina-atual">1</span>
-                            <button id="btn-proximo">Próximo</button>
-                        </div>
+                        <h2 style="margin-bottom: 5px;">Novidades Legislativas</h2>
+                        <p style="color: #4a5568; margin-bottom: 30px; font-size: 1.1em;">Descubra, na prática, como as novas decisões de Brasília afetam o seu bolso e a sua rotina. </p>
+
+                        <div id="feed-noticias" class="news-grid"></div>
+
+                        <div id="scroll-sentinela" style="text-align: center; padding: 30px; color: #718096; font-weight: bold;">
+                            </div>
                     </section>
                 </div>
             </div>
 
 
-            <!-- ========================================== -->
-            <!-- TELA 2: MODO LEITURA (O Layout do seu Desenho) -->
-            <!-- ========================================== -->
             <div id="view-leitura" style="display: none;">
                 <div class="leitura-grid">
-                    
-                    <!-- Lado Esquerdo do Modo Leitura (A Matéria) -->
+
                     <div class="coluna-materia">
-                        <!-- Banner no Topo -->
                         <img id="materia-banner" src="" alt="Banner da Lei" class="materia-banner-img">
-                        
-                        <!-- Setinha de Voltar logo abaixo do banner -->
+
                         <button id="btn-voltar-feed" class="btn-voltar" title="Voltar para as notícias">
                             <span style="font-size: 1.5em; vertical-align: middle;">⬅</span> Voltar
                         </button>
-                        
+
                         <div style="padding-top: 10px;">
                             <span class="tag-modal">ANÁLISE DE IMPACTO</span>
                             <h1 id="materia-titulo">Título da Matéria</h1>
-                            
+
                             <div id="materia-texto" class="texto-artigo">
                                 <div class="loading">🤖 Agente IA redigindo a matéria. Aguarde...</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lado Direito do Modo Leitura (Ferramentas) -->
                     <div class="coluna-ferramentas">
-                        
-                        <!-- Bloco 1: Feedback -->
+
                         <div class="ferramenta-box">
-                            <h3>Deixe sua opinião</h3>
-                            <textarea placeholder="O que você achou dessa lei?" class="feedback-input"></textarea>
-                            <button class="btn-enviar-feedback">Enviar</button>
+                            <h3 style="margin-bottom: 5px;">Deixe sua opinião</h3>
+
+                            <div class="star-rating-picker" style="margin-bottom: 10px; font-size: 1.2em; color: #cbd5e0;">
+                                <span class="star-btn" data-nota="1" style="cursor:pointer;">⭐</span>
+                                <span class="star-btn" data-nota="2" style="cursor:pointer;">⭐</span>
+                                <span class="star-btn" data-nota="3" style="cursor:pointer;">⭐</span>
+                                <span class="star-btn" data-nota="4" style="cursor:pointer;">⭐</span>
+                                <span class="star-btn" data-nota="5" style="cursor:pointer;">⭐</span>
+                                <span id="nota-selecionada-display" style="font-size: 0.8em; margin-left: 10px; color: #4a5568;">Selecione uma nota</span>
+                            </div>
+
+                            <textarea placeholder="O que você achou dessa lei?" class="feedback-input" id="feedback-texto"></textarea>
+                            <button class="btn-enviar-feedback">Enviar Análise</button>
                         </div>
 
-                        <!-- Bloco 2: Dashboard -->
                         <div class="ferramenta-box">
                             <h3>Dashboard</h3>
                             <img id="dashboard-chart" src="" alt="Carregando Gráfico..." class="chart-img-lateral">
+
+                            <div id="ranking-barras-google" class="google-ranking-container"></div>
                         </div>
 
-                        <!-- Bloco 3: Fórum -->
                         <div class="ferramenta-box">
                             <h3>Fórum</h3>
                             <div id="container-comentarios-forum" class="forum-lateral">

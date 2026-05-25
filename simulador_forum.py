@@ -4,7 +4,7 @@ from groq import Groq
 from database import conectar
 
 # CHAVE DA GROQ (A sua chave gratuita que começa com gsk_...)
-CHAVE_API = ""
+CHAVE_API = "x"
 client = Groq(api_key=CHAVE_API)
 
 # Usando o Llama 3.1 da Meta (Gratuito, ultra-rápido e não foi aposentado!)

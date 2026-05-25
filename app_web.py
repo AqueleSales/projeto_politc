@@ -1,5 +1,6 @@
 import io
 import matplotlib
+
 matplotlib.use('Agg')  # <-- OBRIGATÓRIO para o Matplotlib funcionar dentro do Flask
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,13 +22,14 @@ def index():
 @app.route('/api/noticias')
 def api_noticias():
     pagina = int(request.args.get('pagina', 1))
-    limite = 5
+    limite = 4 # <--- MUDE AQUI PARA 4
     offset = (pagina - 1) * limite
 
     conn = conectar()
     cursor = conn.cursor()
 
-    # Busca apenas as leis que já passaram pelo Agente 1 (têm título)
+    # O "ORDER BY id_noticia DESC" já garante o comportamento de PILHA (LIFO).
+    # A notícia mais nova (maior ID) sempre será a primeira a aparecer no topo!
     cursor.execute('''
         SELECT id_noticia, titulo_vitrine 
         FROM noticias 
@@ -60,11 +62,11 @@ def api_forum(id_noticia):
 
     # Filtra os debates estritamente para a notícia selecionada
     cursor.execute('''
-        SELECT nome_usuario, categoria_trabalhador, texto_comentario, nota_impacto, classificacao_ia
-        FROM forum
-        WHERE id_noticia = %s
-        ORDER BY id_comentario DESC
-    ''', (id_noticia,))
+                   SELECT nome_usuario, categoria_trabalhador, texto_comentario, nota_impacto, classificacao_ia
+                   FROM forum
+                   WHERE id_noticia = %s
+                   ORDER BY id_comentario DESC
+                   ''', (id_noticia,))
 
     resultados = cursor.fetchall()
     conn.close()
@@ -90,16 +92,20 @@ def obter_dashboard_dinamico(id_noticia):
 
         # Query ultra rápida: calcula o sentimento apenas DESTE projeto de lei
         query = """
-            SELECT 
-                CASE 
-                    WHEN classificacao_ia ILIKE '%%não%%' OR classificacao_ia ILIKE '%%inútil%%' OR classificacao_ia ILIKE '%%pouco%%' THEN 'Não Útil'
+                SELECT CASE \
+                           WHEN classificacao_ia ILIKE '%%não%%' OR \
+                       classificacao_ia ILIKE '%%inútil%%' OR classificacao_ia ILIKE '%%pouco%%' THEN 'Não Útil'
                     ELSE 'Útil'
-                END as sentimento,
+                END \
+                as sentimento,
                 COUNT(*) as total 
             FROM forum 
-            WHERE id_noticia = %s
-            GROUP BY sentimento
-        """
+            WHERE id_noticia = \
+                %s
+                GROUP \
+                BY \
+                sentimento \
+                """
         # Atenção: Ajustamos os % da query ILIKE para %% para não dar conflito com o %s no psycopg2
         df = pd.read_sql(query, engine, params=(id_noticia,))
 
@@ -107,72 +113,76 @@ def obter_dashboard_dinamico(id_noticia):
         if isinstance(df, tuple):
             df = df[0]
 
-        plt.figure(figsize=(4, 4)) # Tamanho menor para caber bonito na barra lateral
+        plt.figure(figsize=(4, 4))  # Tamanho menor para caber bonito na barra lateral
 
         if df.empty:
-            # Se a lei não tiver comentários ainda, mostra um gráfico de espera elegante
-            plt.pie([1], labels=['Sem Dados'], colors=['#cbd5e0'], 
+            # Gráfico de espera elegante (Sem Dados)
+            plt.pie([1], labels=['Sem Dados'], colors=['#cbd5e0'],
                     textprops={'fontsize': 10, 'color': '#718096'})
         else:
+            # Cores dinâmicas (Verde/Vermelho)
             cores = ['#2ecc71' if s == 'Útil' else '#e74c3c' for s in df['sentimento']]
-            # Aumentei a fonte do percentual e tirei o título
+
+            #  AQUI ESTÁ O AJUSTE FINAL: Sem título e centralizado
             plt.pie(df['total'], labels=df['sentimento'], autopct='%1.1f%%', startangle=140,
-                    colors=cores, textprops={'fontsize': 12, 'weight': 'bold'},
+                    colors=cores, textprops={'fontsize': 10, 'weight': 'bold'},
                     wedgeprops={'edgecolor': 'white', 'linewidth': 2})
 
-        # 👇 APAGUE (OU COMENTE) A LINHA DO plt.title 👇
-        # plt.title('Sentimento Público', fontsize=12, fontweight='bold', pad=10)
-        
-        # Ajusta as margens para a pizza ocupar o espaço todo sem cortar
-        plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1) 
-        
+        plt.tight_layout()
+        plt.subplots_adjust(left=0.18, right=0.93, top=0.95, bottom=0.05)
+
+        # Salva e devolve a imagem
         img_buffer = io.BytesIO()
         plt.savefig(img_buffer, format='png', dpi=100, transparent=True)
-
-        plt.title('Sentimento Público', fontsize=12, fontweight='bold', pad=10)
-        plt.tight_layout()
-
-        img_buffer = io.BytesIO()
-        plt.savefig(img_buffer, format='png', dpi=100, transparent=True) # Fundo transparente
         img_buffer.seek(0)
-        plt.close() 
+        plt.close()
 
         return Response(img_buffer.getvalue(), mimetype='image/png')
 
     except Exception as e:
         print(f"Erro ao gerar gráfico de pizza filtrado: {e}")
         return "Erro ao processar dados do gráfico", 500
-    
-    # --- ROTA 6: ENVIAR FEEDBACK DO USUÁRIO ---
+
+
+# --- ROTA 6: ENVIAR FEEDBACK DO USUÁRIO ---
 @app.route('/api/enviar_feedback', methods=['POST'])
 def api_enviar_feedback():
     dados = request.json
     id_noticia = dados.get('id_noticia')
     texto_usuario = dados.get('texto')
-    
+    nota_usuario = float(dados.get('nota', 5.0))  # Pega a nota enviada pelo JS
+
     if not id_noticia or not texto_usuario:
         return jsonify({"erro": "Dados incompletos"}), 400
 
+    # --- A MÁGICA: Sincroniza as estrelas com a Pizza! ---
+    if nota_usuario <= 3:
+        sentimento_pizza = 'Não Útil (Humano)'
+    else:
+        sentimento_pizza = 'Útil (Humano)'
+    # -----------------------------------------------------
+
     conn = conectar()
     cursor = conn.cursor()
-    
+
     try:
-        # Insere a sua opinião no banco de dados. 
-        # Como é um comentário humano sem nota, colocamos nota 5.0 e classificação 'Útil' provisória
+        # Agora inserimos o "sentimento_pizza" no banco, em vez do texto fixo
         cursor.execute('''
-            INSERT INTO forum (id_noticia, nome_usuario, categoria_trabalhador, texto_comentario, nota_impacto, classificacao_ia)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (id_noticia, 'Você (Usuário)', 'Cidadão', texto_usuario, 5.0, 'Útil (Feedback Real)'))
-        
+                       INSERT INTO forum (id_noticia, nome_usuario, categoria_trabalhador, texto_comentario,
+                                          nota_impacto, classificacao_ia)
+                       VALUES (%s, %s, %s, %s, %s, %s)
+                       ''', (id_noticia, 'Você (Usuário)', 'Cidadão', texto_usuario, nota_usuario, sentimento_pizza))
+
         conn.commit()
         conn.close()
         return jsonify({"sucesso": True, "mensagem": "Opinião registrada com sucesso!"})
-    
+
     except Exception as e:
         print(f"Erro ao salvar feedback: {e}")
         conn.rollback()
         conn.close()
         return jsonify({"erro": "Falha ao salvar no banco"}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

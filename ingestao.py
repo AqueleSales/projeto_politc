@@ -1,72 +1,100 @@
 import requests
+import time
 from database import conectar
+from groq import Groq
 
-def buscar_projetos_camara(quantidade=15):
-    print("\n📡 Conectando à API de Dados Abertos da Câmara dos Deputados...")
+# Sua chave da Groq (a mesma usada no simulador)
+CHAVE_API = "x"
+client = Groq(api_key=CHAVE_API)
+MODELO = "llama-3.1-8b-instant"
 
+
+def gerar_titulo_ia(ementa):
+    """Pede para a IA gerar um título curto e chamativo baseado na ementa bruta do governo."""
+    try:
+        response = client.chat.completions.create(
+            model=MODELO,
+            messages=[
+                {"role": "system",
+                 "content": "Você é um editor de jornal focado em política. Crie um título extremamente curto, chamativo e em linguagem popular (máximo 7 palavras) para a lei baseada na ementa fornecida. JAMAIS use a palavra 'Título:', aspas, asteriscos ou emojis. Vá direto ao ponto. NÃO coloque a primeira letra de todas as palavras em maiúscula, use a formatação normal do português."},
+                {"role": "user", "content": f"Ementa da lei: {ementa}"}
+            ],
+            temperature=0.3 # Deixa a IA focada e impede invenções de palavras
+        )
+        titulo_gerado = response.choices[0].message.content.strip().replace('"', '')
+        return titulo_gerado
+    except Exception as e:
+        print(f"⚠️ Erro na Groq ao gerar título: {e}")
+        return "Nova lei em tramitação na Câmara"
+
+
+def buscar_novas_leis():
+    print("📡 Conectando à API da Câmara dos Deputados...")
     url = "https://dadosabertos.camara.leg.br/api/v2/proposicoes"
 
-    params = {
+    parametros = {
         "siglaTipo": "PL",
-        "itens": quantidade,
         "ordem": "DESC",
-        "ordenarPor": "id"
+        "ordenarPor": "id",
+        "itens": 30 # Aumentado para 30 leis!
     }
 
     try:
-        resposta = requests.get(url, params=params)
+        resposta = requests.get(url, params=parametros)
         resposta.raise_for_status()
-        dados = resposta.json()['dados']
-        return dados
+        dados = resposta.json().get('dados', [])
+
+        if not dados:
+            print("⚠️ Nenhuma lei encontrada na API.")
+            return
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        novas_leis_adicionadas = 0
+
+        for proposicao in dados:
+            id_oficial = proposicao['id']
+            ementa = proposicao['ementa']
+
+            if not ementa:
+                continue
+
+            # Verifica se já existe
+            cursor.execute("SELECT id_noticia FROM noticias WHERE id_noticia = %s", (id_oficial,))
+            existe = cursor.fetchone()
+
+            if not existe:
+                # 👉 AQUI ENTRA A IA: Gerando o título atrativo em tempo real
+                print(f"🧠 Lendo juridiquês da lei ID {id_oficial} e gerando título...")
+                titulo_atrativo = gerar_titulo_ia(ementa)
+
+                # Salva no banco!
+                cursor.execute('''
+                               INSERT INTO noticias (id_noticia, titulo_vitrine, ementa_oficial)
+                               VALUES (%s, %s, %s)
+                               ''', (id_oficial, titulo_atrativo, ementa))
+
+                print(f"✅ SALVO: '{titulo_atrativo}'")
+                novas_leis_adicionadas += 1
+            else:
+                print(f"⏭️  Lei ID {id_oficial} já existe no banco. Pulando...")
+
+        conn.commit()
+        conn.close()
+
+        print(f"\n🚀 Ingestão concluída! {novas_leis_adicionadas} novas leis foram adicionadas.")
+
     except Exception as e:
-        print(f"❌ Erro ao buscar dados na API da Câmara: {e}")
-        return []
+        print(f"❌ Erro ao buscar dados do governo: {e}")
 
-def popular_banco():
-    projetos = buscar_projetos_camara(quantidade=10)
-
-    if not projetos:
-        print("Nenhum dado retornado da API.")
-        return
-
-    conn = conectar()
-    cursor = conn.cursor()
-    novos_inseridos = 0
-
-    print("🔍 Processando as ementas e verificando duplicatas...")
-
-    for proj in projetos:
-        # AGORA CAPTURAMOS O ID OFICIAL DA API
-        id_noticia = proj['id']
-        numero_lei = str(proj['numero'])
-        ano_lei = proj['ano']
-        ementa_oficial = proj['ementa']
-
-        if not ementa_oficial:
-            continue
-
-        # Usamos o id_noticia para verificar se já existe (é mais rápido e seguro)
-        cursor.execute("SELECT COUNT(*) FROM noticias WHERE id_noticia = %s", (id_noticia,))
-        existe = cursor.fetchone()[0]
-
-        if existe == 0:
-            # INCLUÍMOS O id_noticia NO INSERT
-            cursor.execute('''
-                           INSERT INTO noticias (id_noticia, numero_lei, ano_lei, ementa_oficial)
-                           VALUES (%s, %s, %s, %s)
-                           ''', (id_noticia, numero_lei, ano_lei, ementa_oficial))
-
-            novos_inseridos += 1
-            print(f"   ✅ Novo PL Inserido: {numero_lei}/{ano_lei} (ID: {id_noticia})")
-        else:
-            print(f"   ⏭️ PL {numero_lei}/{ano_lei} já existe no banco Neon. Pulando...")
-
-    conn.commit()
-    conn.close()
-
-    print(f"\n🎉 Ingestão concluída! {novos_inseridos} novas leis foram adicionadas ao banco de dados.")
-    if novos_inseridos > 0:
-        print("🤖 Dica: Agora você já pode rodar seus Agentes de IA para gerar os títulos e matérias dessas novas leis!")
 
 if __name__ == "__main__":
-    popular_banco()
+    while True:
+        print("\n=======================================")
+        buscar_novas_leis()
+        print("=======================================")
+
+        # Para rodar só uma vez e fechar, você pode comentar as duas linhas abaixo
+        print("⏳ Aguardando 1 hora para a próxima varredura...")
+        time.sleep(3600)

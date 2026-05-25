@@ -1,188 +1,280 @@
 let paginaAtual = 1;
-// Variável global para sabermos qual notícia estamos lendo agora
-let leiAtualLida = null; 
+let leiAtualLida = null;
+let notaSelecionada = 0;
+let carregandoNews = false;
+let temMaisNoticias = true;
 
 document.addEventListener("DOMContentLoaded", () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const leiDaUrl = urlParams.get('lei');
+    if (leiDaUrl) {
+        abrirMateria(leiDaUrl, "Projeto de Lei", false);
+    } else {
+        carregarNoticias(paginaAtual);
+    }
+
+    window.addEventListener('popstate', (e) => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('lei')) {
+            abrirMateria(params.get('lei'), "Projeto de Lei", false);
+        } else {
+            fecharMateria(false);
+        }
+    });
+
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
-    const viewNormal = document.getElementById('view-normal');
-    const viewLeitura = document.getElementById('view-leitura');
 
-    // 1. CLIQUE NO MENU LATERAL ESQUERDO
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            viewLeitura.style.display = 'none';
-            viewNormal.style.display = 'block';
+            fecharMateria(true);
 
             navLinks.forEach(nav => nav.classList.remove('active'));
             tabContents.forEach(tab => tab.classList.remove('active'));
-            
+
             link.classList.add('active');
             const targetId = link.getAttribute('data-target');
             document.getElementById(targetId).classList.add('active');
         });
     });
 
-    // 2. CONFIGURAÇÃO DAS NOTÍCIAS
-    carregarNoticias(paginaAtual);
+    document.getElementById('btn-voltar-feed').addEventListener('click', () => fecharMateria(true));
 
-    document.getElementById('btn-proximo').addEventListener('click', () => {
-        paginaAtual++;
-        carregarNoticias(paginaAtual);
-    });
-
-    document.getElementById('btn-anterior').addEventListener('click', () => {
-        if (paginaAtual > 1) {
-            paginaAtual--;
+    const sentinela = document.getElementById('scroll-sentinela');
+    const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting && !carregandoNews && temMaisNoticias) {
+            paginaAtual++;
             carregarNoticias(paginaAtual);
         }
     });
+    observer.observe(sentinela);
 
-    // 3. BOTÃO "VOLTAR" DA TELA DE LEITURA
-    document.getElementById('btn-voltar-feed').addEventListener('click', () => {
-        viewLeitura.style.display = 'none';
-        viewNormal.style.display = 'block';
-        leiAtualLida = null; // Limpa a memória
-        
-        navLinks.forEach(nav => nav.classList.remove('active'));
-        document.querySelector('[data-target="feed-noticias-section"]').classList.add('active');
-        tabContents.forEach(tab => tab.classList.remove('active'));
-        document.getElementById('feed-noticias-section').classList.add('active');
+    const starBtns = document.querySelectorAll('.star-btn');
+    starBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            notaSelecionada = parseInt(btn.getAttribute('data-nota'));
+            document.getElementById('nota-selecionada-display').innerText = `Nota: ${notaSelecionada}.0`;
+            starBtns.forEach((s, index) => s.classList.toggle('active', index < notaSelecionada));
+        });
     });
 
-    // 4. A MÁGICA: BOTÃO DE ENVIAR FEEDBACK
     document.querySelector('.btn-enviar-feedback').addEventListener('click', () => {
-        const inputTexto = document.querySelector('.feedback-input');
+        const inputTexto = document.getElementById('feedback-texto');
         const texto = inputTexto.value.trim();
 
-        if (texto === "") {
-            alert("Por favor, digite sua opinião antes de enviar.");
-            return;
+        if (texto === "" || notaSelecionada === 0) {
+            alert("Por favor, selecione uma nota e digite sua opinião."); return;
         }
 
-        if (leiAtualLida === null) {
-            alert("Erro: Não foi possível identificar a lei atual.");
-            return;
-        }
-
-        // Muda o botão para "Enviando..."
         const btn = document.querySelector('.btn-enviar-feedback');
-        btn.innerText = "Enviando...";
-        btn.disabled = true;
+        btn.innerText = "Enviando..."; btn.disabled = true;
 
-        // Manda pro Python salvar no banco Neon
         fetch('/api/enviar_feedback', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                id_noticia: leiAtualLida,
-                texto: texto
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_noticia: leiAtualLida, texto: texto, nota: notaSelecionada })
         })
         .then(response => response.json())
         .then(data => {
             if (data.sucesso) {
-                inputTexto.value = ""; // Limpa a caixinha
-                alert("Opinião enviada com sucesso!");
-                
-                // --- ATUALIZA TUDO DINAMICAMENTE! ---
-                carregarForumEChart(leiAtualLida); 
-            } else {
-                alert("Erro ao enviar: " + data.erro);
+                inputTexto.value = ""; notaSelecionada = 0;
+                document.getElementById('nota-selecionada-display').innerText = "Selecione uma nota";
+                starBtns.forEach(s => s.classList.remove('active'));
+                carregarForumEChart(leiAtualLida);
             }
         })
-        .catch(error => {
-            alert("Erro de conexão ao enviar feedback.");
-        })
-        .finally(() => {
-            // Volta o botão ao normal
-            btn.innerText = "Enviar";
-            btn.disabled = false;
-        });
+        .finally(() => { btn.innerText = "Enviar Análise"; btn.disabled = false; });
     });
 });
 
+function fecharMateria(atualizarUrl = true) {
+    if (atualizarUrl) {
+        window.history.pushState({}, '', '/');
+    }
+    document.getElementById('view-leitura').style.display = 'none';
+    document.getElementById('view-normal').style.display = 'block';
+    leiAtualLida = null;
+
+    document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+    document.querySelector('[data-target="feed-noticias-section"]').classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.getElementById('feed-noticias-section').classList.add('active');
+}
+
 function carregarNoticias(pagina) {
+    carregandoNews = true;
     const feed = document.getElementById('feed-noticias');
-    feed.innerHTML = '<div class="loading">Buscando atualizações na Câmara...</div>';
-    document.getElementById('pagina-atual').innerText = `Página ${pagina}`;
-    document.getElementById('btn-anterior').disabled = (pagina === 1);
+    const sentinela = document.getElementById('scroll-sentinela');
+
+    // Se for a primeira página, mostra os Skeletons de Loading bonitões
+    if (pagina === 1) {
+        feed.innerHTML = `
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        `;
+    } else {
+        sentinela.innerHTML = '<div class="skeleton-text" style="width: 200px; margin: 0 auto;"></div>';
+    }
 
     fetch(`/api/noticias?pagina=${pagina}`)
         .then(response => response.json())
         .then(noticias => {
-            feed.innerHTML = '';
             if (noticias.length === 0) {
-                feed.innerHTML = '<p style="text-align:center;">Nenhuma notícia encontrada nesta página.</p>';
+                temMaisNoticias = false;
+                sentinela.innerText = "Você chegou ao fim do feed.";
                 return;
             }
+
+            // Quando a resposta chegar, limpa os skeletons se for a página 1
+            if (pagina === 1) feed.innerHTML = '';
+            sentinela.innerHTML = ''; // Limpa o sentinela
 
             noticias.forEach(noti => {
                 const card = document.createElement('div');
                 card.className = 'card-noticia';
-                const imageUrl = `https://picsum.photos/seed/${noti.id}/400/200`;
+                const imageUrl = `https://picsum.photos/seed/lei${noti.id}/400/200`;
 
                 card.innerHTML = `
                     <div style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px 8px 0 0; margin-bottom: 12px;">
                         <img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Capa da Lei">
                     </div>
-                    <h3>🏛️ ${noti.titulo}</h3>
+                    <h3>${noti.titulo}</h3>
                     <p>Ler Análise de Impacto Completa ➔</p>
                 `;
-                card.addEventListener('click', () => abrirMateria(noti.id, noti.titulo));
+                card.addEventListener('click', () => abrirMateria(noti.id, noti.titulo, true));
                 feed.appendChild(card);
             });
-        })
-        .catch(error => console.error('Erro ao carregar notícias:', error));
+            carregandoNews = false;
+        });
 }
 
+function abrirMateria(id_noticia, titulo, atualizarUrl = true) {
+    leiAtualLida = id_noticia;
 
-function abrirMateria(id_noticia, titulo) {
-    leiAtualLida = id_noticia; // Salva o ID globalmente para o feedback usar
+    if (atualizarUrl) {
+        window.history.pushState({id: id_noticia}, '', `?lei=${id_noticia}`);
+    }
+
+    document.getElementById('feedback-texto').value = "";
+    notaSelecionada = 0;
+    document.getElementById('nota-selecionada-display').innerText = "Selecione uma nota";
+    document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
 
     document.getElementById('view-normal').style.display = 'none';
     document.getElementById('view-leitura').style.display = 'block';
-    window.scrollTo(0, 0); 
+    window.scrollTo(0, 0);
 
-    const banner = document.getElementById('materia-banner');
+    document.getElementById('materia-banner').src = `https://picsum.photos/seed/lei${id_noticia}/1200/400`;
+
     const modalTitulo = document.getElementById('materia-titulo');
     const modalTexto = document.getElementById('materia-texto');
-    
-    banner.src = `https://picsum.photos/seed/${id_noticia}/1200/400`; 
+
     modalTitulo.innerText = titulo;
-    modalTexto.innerHTML = '<div class="loading">🤖 Agente IA lendo o documento oficial e redigindo a matéria. Aguarde...</div>';
-    
-    // Busca a Matéria Textual
+
+    // A MÁGICA: Substitui o texto feio pelo Spinner elegante com as cores Dandadan
+    modalTexto.innerHTML = `
+        <div class="spinner-container">
+            <div class="retro-spinner"></div>
+            <div class="spinner-texto">Traduzindo Juridiquês...</div>
+        </div>
+    `;
+
     fetch(`/api/ler_materia/${id_noticia}`)
         .then(response => response.json())
         .then(dados => {
-            const textoFormatado = dados.texto_materia.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+            let textoLimpo = dados.texto_materia;
+            textoLimpo = textoLimpo.replace(/TÍTULO:\s*/gi, '');
+            textoLimpo = textoLimpo.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            const textoFormatado = textoLimpo.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+
             modalTexto.innerHTML = `<p>${textoFormatado}</p>`;
         });
 
-    // Chama a função isolada que carrega só a barra da direita
     carregarForumEChart(id_noticia);
 }
 
-// Essa função isolada atualiza a lateral. Ela é chamada quando abre a matéria E quando você envia um feedback.
+function abrirMateria(id_noticia, titulo, atualizarUrl = true) {
+    leiAtualLida = id_noticia;
+
+    if (atualizarUrl) {
+        window.history.pushState({id: id_noticia}, '', `?lei=${id_noticia}`);
+    }
+
+    document.getElementById('feedback-texto').value = "";
+    notaSelecionada = 0;
+    document.getElementById('nota-selecionada-display').innerText = "Selecione uma nota";
+    document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
+
+    document.getElementById('view-normal').style.display = 'none';
+    document.getElementById('view-leitura').style.display = 'block';
+    window.scrollTo(0, 0);
+
+    document.getElementById('materia-banner').src = `https://picsum.photos/seed/lei${id_noticia}/1200/400`;
+
+    const modalTitulo = document.getElementById('materia-titulo');
+    const modalTexto = document.getElementById('materia-texto');
+
+    modalTitulo.innerText = titulo.replace(/TÍTULO:\s*/gi, '').replace(/\*\*(.*?)\*\*/g, '$1');
+    modalTexto.innerHTML = '<div class="loading">Processando análise de impacto legislativo. Por favor, aguarde...</div>';
+
+    fetch(`/api/ler_materia/${id_noticia}`)
+        .then(response => response.json())
+        .then(dados => {
+            let textoLimpo = dados.texto_materia;
+            textoLimpo = textoLimpo.replace(/TÍTULO:\s*/gi, '');
+            textoLimpo = textoLimpo.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            const textoFormatado = textoLimpo.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+
+            modalTexto.innerHTML = `<p>${textoFormatado}</p>`;
+        });
+
+    carregarForumEChart(id_noticia);
+}
+
+function renderizarBarrasGoogle(comentarios) {
+    const container = document.getElementById('ranking-barras-google');
+    let contagem = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    let total = comentarios.length;
+
+    comentarios.forEach(c => {
+        let n = Math.floor(c.nota);
+        if (n < 1) n = 1;
+        if (n > 5) n = 5;
+        contagem[n]++;
+    });
+
+    container.innerHTML = "";
+
+    for (let i = 5; i >= 1; i--) {
+        let porc = total > 0 ? (contagem[i] / total) * 100 : 0;
+        container.innerHTML += `
+            <div class="nota-linha">
+                <span class="nota-numero">${i}</span>
+                <div class="nota-barra-fundo">
+                    <div class="nota-barra-fill" style="width: ${porc}%"></div>
+                </div>
+            </div>
+        `;
+    }
+}
+
 function carregarForumEChart(id_noticia) {
     const chartImg = document.getElementById('dashboard-chart');
     const forumContainer = document.getElementById('container-comentarios-forum');
 
-    // Atualiza a Imagem (força não usar cache)
     chartImg.src = "";
     chartImg.src = `/api/dashboard/${id_noticia}.png?t=${new Date().getTime()}`;
 
-    // Atualiza a lista do Fórum
-    forumContainer.innerHTML = '<div class="loading">Carregando debates da população...</div>';
+    forumContainer.innerHTML = '<div class="loading">Carregando debates...</div>';
     fetch(`/api/forum/${id_noticia}`)
         .then(response => response.json())
         .then(comentarios => {
             forumContainer.innerHTML = '';
-            
+            renderizarBarrasGoogle(comentarios);
+
             if (comentarios.length === 0) {
                 forumContainer.innerHTML = '<p style="text-align:center; color:#718096; font-size: 0.9em;">Seja o primeiro a comentar!</p>';
                 return;
@@ -191,9 +283,9 @@ function carregarForumEChart(id_noticia) {
             comentarios.forEach(c => {
                 const card = document.createElement('div');
                 card.className = 'comentario-card';
-                // Se for você, pinta o card de um azul clarinho pra destacar
+
                 if(c.nome_usuario === 'Você (Usuário)') {
-                    card.style.backgroundColor = "#eebff";
+                    card.style.backgroundColor = "#ebf8ff";
                     card.style.border = "1px solid #3182ce";
                 }
                 

@@ -2,7 +2,7 @@ import psycopg2
 from sqlalchemy import create_engine
 
 # COLE A SUA URL DO NEON AQUI DENTRO (Mantenha as aspas)
-DATABASE_URL = ""
+DATABASE_URL = "x"
 
 def conectar():
     # Cria a conexão direta com a Nuvem
