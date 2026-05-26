@@ -3,8 +3,11 @@ let leiAtualLida = null;
 let notaSelecionada = 0;
 let carregandoNews = false;
 let temMaisNoticias = true;
+let termoPesquisaAtual = ""; // Variável para guardar o que o usuário está pesquisando
+let filtrosAtivos = []; // Variável para guardar os filtros selecionados no modal
 
 document.addEventListener("DOMContentLoaded", () => {
+    // --- LÓGICA DE URL E NAVEGAÇÃO ---
     const urlParams = new URLSearchParams(window.location.search);
     const leiDaUrl = urlParams.get('lei');
     if (leiDaUrl) {
@@ -22,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // --- MENU LATERAL (ABAS) ---
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -41,6 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById('btn-voltar-feed').addEventListener('click', () => fecharMateria(true));
 
+    // --- SCROLL INFINITO ---
     const sentinela = document.getElementById('scroll-sentinela');
     const observer = new IntersectionObserver(entries => {
         if (entries[0].isIntersecting && !carregandoNews && temMaisNoticias) {
@@ -50,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     observer.observe(sentinela);
 
+    // --- LÓGICA DE FEEDBACK (ESTRELAS) ---
     const starBtns = document.querySelectorAll('.star-btn');
     starBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -86,7 +92,79 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .finally(() => { btn.innerText = "Enviar Análise"; btn.disabled = false; });
     });
+
+    // --- LÓGICA DOS FILTROS (TAGS CLICÁVEIS) ---
+    const tagsFiltro = document.querySelectorAll('.tag-filtro');
+    tagsFiltro.forEach(tag => {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('active');
+        });
+    });
+
+    // --- LÓGICA DO BOTÃO APLICAR FILTROS ---
+    const btnAplicarFiltros = document.querySelector('.btn-aplicar-filtros');
+    if (btnAplicarFiltros) {
+        btnAplicarFiltros.addEventListener('click', () => {
+            // Pega todas as tags que estão com a classe 'active'
+            const tagsAtivas = document.querySelectorAll('.tag-filtro.active');
+
+            // Transforma em uma lista de textos e salva na variável global
+            filtrosAtivos = Array.from(tagsAtivas).map(tag => tag.innerText);
+
+            toggleModalFiltro(); // Fecha a janela do modal
+
+            // Reseta o feed e busca as notícias filtradas
+            paginaAtual = 1;
+            temMaisNoticias = true;
+            document.getElementById('feed-noticias').innerHTML = '';
+            carregarNoticias(paginaAtual);
+        });
+    }
+
+    // --- LÓGICA DA BARRA DE PESQUISA ---
+    const btnPesquisa = document.querySelector('.search-btn');
+    const inputPesquisa = document.getElementById('input-pesquisa');
+
+    function executarPesquisa() {
+        if (!inputPesquisa) return;
+        termoPesquisaAtual = inputPesquisa.value.trim();
+        paginaAtual = 1;
+        temMaisNoticias = true;
+
+        // Limpa o feed atual antes de carregar os resultados da pesquisa
+        document.getElementById('feed-noticias').innerHTML = '';
+        carregarNoticias(paginaAtual);
+    }
+
+    if (btnPesquisa && inputPesquisa) {
+        // Pesquisa ao clicar na lupa
+        btnPesquisa.addEventListener('click', executarPesquisa);
+
+        // Pesquisa ao apertar "Enter" no teclado
+        inputPesquisa.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executarPesquisa();
+            }
+        });
+    }
 });
+
+// ============================================================================
+// FUNÇÕES GLOBAIS
+// ============================================================================
+
+// --- LÓGICA DO MODAL DE FILTROS ---
+function toggleModalFiltro() {
+    const modal = document.getElementById('modal-filtro');
+    if (modal.classList.contains('active')) {
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    } else {
+        modal.style.display = 'flex';
+        setTimeout(() => { modal.classList.add('active'); }, 10);
+    }
+}
 
 function fecharMateria(atualizarUrl = true) {
     if (atualizarUrl) {
@@ -107,7 +185,6 @@ function carregarNoticias(pagina) {
     const feed = document.getElementById('feed-noticias');
     const sentinela = document.getElementById('scroll-sentinela');
 
-    // Se for a primeira página, mostra os Skeletons de Loading bonitões
     if (pagina === 1) {
         feed.innerHTML = `
             <div class="skeleton-card"></div>
@@ -119,18 +196,28 @@ function carregarNoticias(pagina) {
         sentinela.innerHTML = '<div class="skeleton-text" style="width: 200px; margin: 0 auto;"></div>';
     }
 
-    fetch(`/api/noticias?pagina=${pagina}`)
+    // AQUI: Monta a URL com a Pesquisa E os Filtros
+    let urlDaApi = `/api/noticias?pagina=${pagina}&busca=${encodeURIComponent(termoPesquisaAtual)}`;
+    if (filtrosAtivos.length > 0) {
+        urlDaApi += `&filtros=${encodeURIComponent(filtrosAtivos.join(','))}`;
+    }
+
+    fetch(urlDaApi)
         .then(response => response.json())
         .then(noticias => {
             if (noticias.length === 0) {
                 temMaisNoticias = false;
-                sentinela.innerText = "Você chegou ao fim do feed.";
+                if (pagina === 1) {
+                    sentinela.innerHTML = "<p style='grid-column: 1/-1; text-align: center; color: var(--muted-purple); font-weight: bold;'>Nenhuma lei encontrada com estes filtros.</p>";
+                } else {
+                    sentinela.innerText = "Você chegou ao fim do feed.";
+                }
+                if (pagina === 1) feed.innerHTML = '';
                 return;
             }
 
-            // Quando a resposta chegar, limpa os skeletons se for a página 1
             if (pagina === 1) feed.innerHTML = '';
-            sentinela.innerHTML = ''; // Limpa o sentinela
+            sentinela.innerHTML = '';
 
             noticias.forEach(noti => {
                 const card = document.createElement('div');
@@ -172,53 +259,15 @@ function abrirMateria(id_noticia, titulo, atualizarUrl = true) {
     const modalTitulo = document.getElementById('materia-titulo');
     const modalTexto = document.getElementById('materia-texto');
 
-    modalTitulo.innerText = titulo;
+    modalTitulo.innerText = titulo.replace(/TÍTULO:\s*/gi, '').replace(/\*\*(.*?)\*\*/g, '$1');
 
-    // A MÁGICA: Substitui o texto feio pelo Spinner elegante com as cores Dandadan
+    // SPINNER DANDADAN
     modalTexto.innerHTML = `
         <div class="spinner-container">
             <div class="retro-spinner"></div>
             <div class="spinner-texto">Traduzindo Juridiquês...</div>
         </div>
     `;
-
-    fetch(`/api/ler_materia/${id_noticia}`)
-        .then(response => response.json())
-        .then(dados => {
-            let textoLimpo = dados.texto_materia;
-            textoLimpo = textoLimpo.replace(/TÍTULO:\s*/gi, '');
-            textoLimpo = textoLimpo.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            const textoFormatado = textoLimpo.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-
-            modalTexto.innerHTML = `<p>${textoFormatado}</p>`;
-        });
-
-    carregarForumEChart(id_noticia);
-}
-
-function abrirMateria(id_noticia, titulo, atualizarUrl = true) {
-    leiAtualLida = id_noticia;
-
-    if (atualizarUrl) {
-        window.history.pushState({id: id_noticia}, '', `?lei=${id_noticia}`);
-    }
-
-    document.getElementById('feedback-texto').value = "";
-    notaSelecionada = 0;
-    document.getElementById('nota-selecionada-display').innerText = "Selecione uma nota";
-    document.querySelectorAll('.star-btn').forEach(s => s.classList.remove('active'));
-
-    document.getElementById('view-normal').style.display = 'none';
-    document.getElementById('view-leitura').style.display = 'block';
-    window.scrollTo(0, 0);
-
-    document.getElementById('materia-banner').src = `https://picsum.photos/seed/lei${id_noticia}/1200/400`;
-
-    const modalTitulo = document.getElementById('materia-titulo');
-    const modalTexto = document.getElementById('materia-texto');
-
-    modalTitulo.innerText = titulo.replace(/TÍTULO:\s*/gi, '').replace(/\*\*(.*?)\*\*/g, '$1');
-    modalTexto.innerHTML = '<div class="loading">Processando análise de impacto legislativo. Por favor, aguarde...</div>';
 
     fetch(`/api/ler_materia/${id_noticia}`)
         .then(response => response.json())

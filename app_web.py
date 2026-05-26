@@ -18,33 +18,73 @@ def index():
     return render_template('index.html')
 
 
-# --- ROTA 2: FEED DE NOTÍCIAS COM PAGINAÇÃO ---
+# --- ROTA 2: FEED DE NOTÍCIAS COM PAGINAÇÃO, BUSCA E FILTROS ---
 @app.route('/api/noticias')
 def api_noticias():
-    pagina = int(request.args.get('pagina', 1))
-    limite = 4 # <--- MUDE AQUI PARA 4
-    offset = (pagina - 1) * limite
+    pagina = request.args.get('pagina', 1, type=int)
+    termo_pesquisa = request.args.get('busca', '', type=str)
+    filtros = request.args.get('filtros', '', type=str)  # <- Pega os filtros do JS
+
+    itens_por_pagina = 12
+    offset = (pagina - 1) * itens_por_pagina
 
     conn = conectar()
     cursor = conn.cursor()
 
-    # O "ORDER BY id_noticia DESC" já garante o comportamento de PILHA (LIFO).
-    # A notícia mais nova (maior ID) sempre será a primeira a aparecer no topo!
-    cursor.execute('''
-        SELECT id_noticia, titulo_vitrine 
-        FROM noticias 
-        WHERE titulo_vitrine IS NOT NULL 
-        ORDER BY id_noticia DESC 
-        LIMIT %s OFFSET %s
-    ''', (limite, offset))
+    # Começamos a montar a Query Base
+    query = "SELECT id_noticia, titulo_vitrine, resumo_vitrine FROM noticias WHERE titulo_vitrine IS NOT NULL AND titulo_vitrine != 'Título Indisponível'"
+    params = []
 
-    resultados = cursor.fetchall()
+    # 1. Adiciona a pesquisa por texto (se houver)
+    if termo_pesquisa:
+        query += " AND (titulo_vitrine ILIKE %s OR ementa_oficial ILIKE %s)"
+        params.extend([f"%{termo_pesquisa}%", f"%{termo_pesquisa}%"])
+
+    # 2. Adiciona os Filtros (Corrigido com %% para não quebrar o Python!)
+    if filtros:
+        lista_filtros = filtros.split(',')
+        filtro_condicoes = []
+
+        for f in lista_filtros:
+            f = f.lower().strip()
+            if f == 'trabalhista':
+                filtro_condicoes.append(
+                    "ementa_oficial ILIKE '%%trabalho%%' OR ementa_oficial ILIKE '%%emprego%%' OR ementa_oficial ILIKE '%%clt%%'")
+            elif f == 'penal':
+                filtro_condicoes.append(
+                    "ementa_oficial ILIKE '%%penal%%' OR ementa_oficial ILIKE '%%crime%%' OR ementa_oficial ILIKE '%%prisão%%'")
+            elif f == 'meio ambiente':
+                filtro_condicoes.append(
+                    "ementa_oficial ILIKE '%%ambiental%%' OR ementa_oficial ILIKE '%%meio ambiente%%'")
+            elif f == 'tributário (impostos)':
+                filtro_condicoes.append(
+                    "ementa_oficial ILIKE '%%imposto%%' OR ementa_oficial ILIKE '%%tributo%%' OR ementa_oficial ILIKE '%%taxa%%'")
+            elif f == 'nacional':
+                filtro_condicoes.append("ementa_oficial ILIKE '%%nacional%%' OR ementa_oficial ILIKE '%%federal%%'")
+            elif f == 'distrital':
+                filtro_condicoes.append(
+                    "ementa_oficial ILIKE '%%distrito federal%%' OR ementa_oficial ILIKE '%%distrital%%'")
+
+        if filtro_condicoes:
+            query += " AND (" + " OR ".join(filtro_condicoes) + ")"
+
+    # Termina a Query com a paginação
+    query += " ORDER BY id_noticia DESC LIMIT %s OFFSET %s"
+    params.extend([itens_por_pagina, offset])
+
+    cursor.execute(query, params)
+    noticias_bd = cursor.fetchall()
     conn.close()
 
-    # Formata para JSON para o JavaScript ler
-    noticias = [{"id": linha[0], "titulo": linha[1]} for linha in resultados]
-    return jsonify(noticias)
+    resultado = []
+    for noti in noticias_bd:
+        resultado.append({
+            "id": noti[0],
+            "titulo": noti[1],
+            "resumo": noti[2]
+        })
 
+    return jsonify(resultado)
 
 # --- ROTA 3: LER MATÉRIA (CHAMA O AGENTE DA GROQ SE PRECISAR) ---
 @app.route('/api/ler_materia/<int:id_noticia>')

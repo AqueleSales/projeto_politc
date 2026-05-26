@@ -5,19 +5,22 @@
 /* --- PALETA DANDADAN & REDEFINIÇÕES GERAIS --- */
 /* ======================================================== */
 :root {
-    --bg-color: #FDFBF7; /* Fundo Creme */
+    /* O Fundo agora é um Off-White real (cor de página de livro antigo) */
+    --bg-color: #efe9db;
 
     /* AS CORES DO DANDADAN */
-    --text-main: #46334F; /* O Roxo escuro/preto absoluto do Dandadan */
-    --yellow-hero: #F2C230; /* Amarelo vibrante Dandadan */
-    --accent-orange: #F24F13; /* Laranja escuro Dandadan */
-    --accent-light-orange: #F2921D; /* Laranja claro Dandadan */
-    --muted-purple: #8082A6; /* O roxo/cinza suave do Dandadan */
+    --text-main: #46334F;
+    --yellow-hero: #F2C230;
+    --accent-orange: #F24F13;
+    --accent-light-orange: #F2921D;
+    --muted-purple: #8082A6;
 
     --gray-card: #EAEAEA;
     --sidebar-width: 260px;
-    --border-color: #8082A6; /* Usando o roxo suave como linha de grade */
-    --card-bg: #FFFFFF;
+    --border-color: #8082A6;
+
+    /* Os bloquinhos laterais e cards agora são um creme clarinho, não mais branco puro */
+    --card-bg: #faf4de;
 }
 
 body {
@@ -44,7 +47,7 @@ body {
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    background: var(--bg-color); /* Fundo acompanhando o resto */
+    background: var(--bg-color);
     z-index: 10;
 }
 
@@ -69,7 +72,7 @@ body {
     font-size: 0.9rem;
     font-weight: 600;
     transition: all 0.2s ease;
-    border-right: 3px solid transparent; /* Preparando o efeito da aba ativa */
+    border-right: 3px solid transparent;
 }
 
 .main-nav li a:hover {
@@ -77,8 +80,8 @@ body {
 }
 
 .main-nav li a.active {
-    background-color: rgba(26, 86, 219, 0.05); /* Fundo leve azulado */
-    border-right-color: var(--text-main); /* Linha grossa marcando a seção */
+    background-color: rgba(26, 86, 219, 0.05);
+    border-right-color: var(--text-main);
 }
 
 .main-nav sup {
@@ -195,37 +198,234 @@ body {
 }
 
 /* ======================================================== */
-/* --- GRID DE NOTÍCIAS (FEED) --- */
+/* --- HEADER DE NOTÍCIAS (Pesquisa e Filtros) --- */
 /* ======================================================== */
 .news-section {
     padding: 3rem 4rem;
 }
 
-.news-section h2 {
-    font-size: 2rem;
-    letter-spacing: -1px;
-    font-weight: 800;
+.news-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
+.news-titles h2 {
+    font-size: 2.2rem;
+    letter-spacing: -1px;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.news-titles p {
+    margin: 0;
+    color: var(--muted-purple);
+    font-weight: 600;
+}
+
+.search-filter-container {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-box {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--text-main);
+    border-radius: 25px;
+    padding: 5px 15px;
+    background: var(--card-bg);
+    width: 250px;
+    transition: box-shadow 0.2s;
+}
+
+.search-box:focus-within {
+    box-shadow: 3px 3px 0px var(--text-main);
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: var(--text-main);
+    width: 100%;
+}
+
+.search-btn {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--yellow-hero);
+    color: var(--text-main);
+    border: 2px solid var(--text-main);
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px var(--text-main);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.filter-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0px 0px 0px var(--text-main);
+}
+
+/* ======================================================== */
+/* --- MODAL DE FILTROS (Fundo Desfocado / Glassmorphism) --- */
+/* ======================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(239, 233, 219, 0.7); /* Mesma cor do fundo, mas transparente */
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: 2px solid var(--text-main);
+    border-radius: 16px;
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 8px 8px 0px var(--text-main);
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--gray-card);
+    padding-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--text-main);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text-main);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.filtro-grupo h4 {
+    margin: 15px 0 10px 0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted-purple);
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tag-filtro {
+    padding: 8px 16px;
+    border: 1px solid var(--text-main);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-main);
+    background: transparent;
+    transition: all 0.2s;
+}
+
+.tag-filtro:hover {
+    background: var(--gray-card);
+}
+
+.tag-filtro.active {
+    background: var(--text-main);
+    color: #fff;
+}
+
+.btn-aplicar-filtros {
+    width: 100%;
+    margin-top: 25px;
+    background: var(--accent-orange);
+    color: #fff;
+    border: 2px solid var(--text-main);
+    border-radius: 8px;
+    padding: 15px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px var(--text-main);
+}
+
+/* ======================================================== */
+/* --- GRID DE NOTÍCIAS (FEED) --- */
+/* ======================================================== */
 #feed-noticias {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Auto-adapta cards de ~320px */
-    gap: 30px; /* Mais respiro entre os cards */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
     padding: 20px 0;
 }
 
 .card-noticia {
     display: flex;
     flex-direction: column;
-    height: 380px; /* Cards um pouco mais altos */
+    height: 380px;
     background: var(--card-bg);
-    border: 1px solid var(--border-color); /* Linha fina e elegante */
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); /* Sombra difusa */
-    animation: fadeInUp 0.6s ease-out forwards; /* Animação de entrada */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease-out forwards;
 }
 
 .card-noticia:hover {
@@ -239,7 +439,7 @@ body {
     font-weight: 800;
     color: var(--text-main);
     display: -webkit-box;
-    -webkit-line-clamp: 3; /* Permite até 3 linhas pro título */
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     line-height: 1.3;
@@ -264,7 +464,7 @@ body {
 .leitura-grid {
     display: grid;
     grid-template-columns: 1fr 380px;
-    gap: 60px; /* Muito respiro */
+    gap: 60px;
     padding: 40px 60px;
     align-items: start;
 }
@@ -272,7 +472,7 @@ body {
 .materia-banner-img {
     width: 100%;
     height: 350px;
-    object-fit: cover; /* "cover" é melhor que "fill" para não distorcer fotos */
+    object-fit: cover;
     border-radius: 12px;
     margin-bottom: 25px;
     border: 1px solid var(--border-color);
@@ -305,8 +505,8 @@ body {
     margin-bottom: 30px;
     line-height: 1.1;
     font-weight: 900;
-    font-family: 'Playfair Display', serif; /* Pegada Chapaza */
-    text-align: center; /* Centraliza o títuloão */
+    font-family: 'Playfair Display', serif;
+    text-align: center;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
@@ -326,10 +526,10 @@ body {
     font-size: 1.15em;
     line-height: 1.8;
     color: var(--text-main);
-    font-family: 'Playfair Display', serif; /* Pegada Chapaza */
+    font-family: 'Inter', sans-serif; /* Fonte limpa, sem serifa, perfeita para leitura */
     text-align: justify;
     max-width: 750px;
-    margin: 0 auto; /* Centraliza o bloco de texto embaixo do banner */
+    margin: 0 auto;
 }
 
 .texto-artigo p {
@@ -348,11 +548,11 @@ body {
 }
 
 .ferramenta-box {
-    border: 2px solid var(--text-main); /* Linha escura grossa e agressiva */
+    border: 2px solid var(--text-main);
     border-radius: 12px;
     padding: 25px;
     background: var(--card-bg);
-    box-shadow: 4px 4px 0px var(--text-main); /* Efeito 3D Brutalista */
+    box-shadow: 4px 4px 0px var(--text-main);
 }
 
 .ferramenta-box h3 {
@@ -376,20 +576,19 @@ body {
 }
 
 .feedback-input {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1em;
-    color: var(--text-main);
     width: 100%;
-    height: 90px;
-    border: 1px solid var(--border-color);
+    height: 100px;
+    border: 2px solid var(--text-main);
     border-radius: 8px;
     resize: none;
     padding: 15px;
     box-sizing: border-box;
     margin-bottom: 15px;
-    font-family: inherit;
-    font-size: 0.9em;
-    background: #FAFAFA;
+    font-family: 'Playfair Display', serif; /* Fonte editorial aqui */
+    font-size: 1.1em;
+    background: var(--bg-color);
+    color: var(--text-main);
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
 }
 
 .btn-enviar-feedback {
@@ -405,7 +604,7 @@ body {
 }
 
 .btn-enviar-feedback:hover {
-    background: var(--accent-blue);
+    background: var(--accent-light-orange);
 }
 
 /* Chart Pizza */
@@ -436,7 +635,7 @@ body {
 .nota-barra-fundo {
     flex-grow: 1;
     height: 12px;
-    background-color: var(--gray-card);
+    background: var(--gray-card);
     border-radius: 6px;
     margin: 0 12px;
     overflow: hidden;
@@ -444,7 +643,7 @@ body {
 
 .nota-barra-fill {
     height: 100%;
-    background-color: var(--yellow-hero); /* Usando o mostarda do tema */
+    background-color: var(--yellow-hero);
     width: 0%;
     transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 6px;
@@ -457,7 +656,6 @@ body {
     padding-right: 10px;
 }
 
-/* Barra de rolagem customizada */
 .forum-lateral::-webkit-scrollbar {
     width: 6px;
 }
@@ -502,7 +700,6 @@ body {
     100% { background-position: 200% 0; }
 }
 
-/* SPINNER RETRO-MODERNO PARA A MATÉRIA */
 .spinner-container {
     display: flex;
     flex-direction: column;
@@ -516,7 +713,7 @@ body {
     width: 50px;
     height: 50px;
     border: 4px solid var(--border-color);
-    border-top: 4px solid var(--accent-blue); /* Usa o azul vibrante girando */
+    border-top: 4px solid var(--accent-orange);
     border-radius: 50%;
     animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
     margin-bottom: 25px;
@@ -544,7 +741,7 @@ body {
 }
 
 #nota-selecionada-display {
-    margin-top: 4px; /* Desce o texto um pouquinho para alinhar com o centro das estrelas */
+    margin-top: 4px;
     font-size: 0.75em;
     font-weight: 600;
 }

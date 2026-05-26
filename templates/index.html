@@ -54,8 +54,29 @@
 
                 <div id="feed-noticias-section" class="tab-content">
                     <section class="news-section">
-                        <h2 style="margin-bottom: 5px;">Novidades Legislativas</h2>
-                        <p style="color: #4a5568; margin-bottom: 30px; font-size: 1.1em;">Descubra, na prática, como as novas decisões de Brasília afetam o seu bolso e a sua rotina. </p>
+
+                        <!-- NOVO HEADER DE NOTÍCIAS COM PESQUISA E FILTROS -->
+                        <div class="news-header">
+                            <div class="news-titles">
+                                <h2>Novidades Legislativas</h2>
+                                <p>Descubra, na prática, como as novas decisões de Brasília afetam o seu bolso e a sua rotina.</p>
+                            </div>
+
+                            <div class="search-filter-container">
+                                <!-- Barra de Pesquisa -->
+                                <div class="search-box">
+                                    <input type="text" id="input-pesquisa" placeholder="Pesquisar leis, temas...">
+                                    <button class="search-btn">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    </button>
+                                </div>
+                                <!-- Botão de Filtro -->
+                                <button class="filter-btn" onclick="toggleModalFiltro()">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                                    Filtros
+                                </button>
+                            </div>
+                        </div>
 
                         <div id="feed-noticias" class="news-grid"></div>
 
@@ -65,6 +86,38 @@
                 </div>
             </div>
 
+            <!-- O MODAL DE FILTROS (Fica escondido por padrão) -->
+            <div id="modal-filtro" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Filtrar Notícias</h3>
+                        <button class="close-btn" onclick="toggleModalFiltro()">×</button>
+                    </div>
+
+                    <div class="filtro-grupo">
+                        <h4>Abrangência</h4>
+                        <div class="tags-container">
+                            <span class="tag-filtro active">Nacional</span>
+                            <span class="tag-filtro">Distrital</span>
+                            <span class="tag-filtro">Estadual</span>
+                            <span class="tag-filtro">Municipal</span>
+                            <span class="tag-filtro">Externa</span>
+                        </div>
+                    </div>
+
+                    <div class="filtro-grupo">
+                        <h4>Temas Quentes</h4>
+                        <div class="tags-container">
+                            <span class="tag-filtro">Trabalhista</span>
+                            <span class="tag-filtro">Tributário (Impostos)</span>
+                            <span class="tag-filtro">Penal</span>
+                            <span class="tag-filtro">Meio Ambiente</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-aplicar-filtros" onclick="toggleModalFiltro()">Aplicar Filtros</button>
+                </div>
+            </div>
 
             <div id="view-leitura" style="display: none;">
                 <div class="leitura-grid">
