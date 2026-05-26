@@ -1,9 +1,14 @@
 import time
 from groq import Groq
 from database import conectar
+import os
+from dotenv import load_dotenv
 
-CHAVE_API = "x"
+load_dotenv()
+
+CHAVE_API = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=CHAVE_API)
+
 MODELO_GROQ = "llama-3.1-8b-instant"
 
 def agente_jornalista(ementa):

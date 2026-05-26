@@ -1,11 +1,15 @@
-import requests
 import time
+import requests
 from database import conectar
 from groq import Groq
+import os
+from dotenv import load_dotenv
 
-# Sua chave da Groq (a mesma usada no simulador)
-CHAVE_API = "x"
+# Abre o cofre e pega a chave da Groq
+load_dotenv()
+CHAVE_API = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=CHAVE_API)
+
 MODELO = "llama-3.1-8b-instant"
 
 

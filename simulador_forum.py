@@ -1,15 +1,15 @@
 import time
 import json
-from groq import Groq
 from database import conectar
+from groq import Groq
+import os
+from dotenv import load_dotenv
 
-# CHAVE DA GROQ (A sua chave gratuita que começa com gsk_...)
-CHAVE_API = "x"
+load_dotenv()
+CHAVE_API = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=CHAVE_API)
 
-# Usando o Llama 3.1 da Meta (Gratuito, ultra-rápido e não foi aposentado!)
 MODELO = "llama-3.1-8b-instant"
-
 
 def gerar_comentarios_falsos(id_noticia, ementa, qtd=4):
     system_prompt = f"""Você é um gerador de dados para um simulador de banco de dados.
