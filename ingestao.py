@@ -1,4 +1,3 @@
-import time
 import requests
 from database import conectar
 from groq import Groq
@@ -94,11 +93,7 @@ def buscar_novas_leis():
 
 
 if __name__ == "__main__":
-    while True:
-        print("\n=======================================")
-        buscar_novas_leis()
-        print("=======================================")
-
-        # Para rodar só uma vez e fechar, você pode comentar as duas linhas abaixo
-        print("⏳ Aguardando 1 hora para a próxima varredura...")
-        time.sleep(3600)
+    print("\n=======================================")
+    buscar_novas_leis()
+    print("=======================================")
+    print("🏁 Varredura finalizada. Encerrando processo.")
