@@ -29,10 +29,10 @@ jobs:
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      run: python ingestao.py
+      run: python -u ingestao.py
 
     - name: 5. Rodar Simulação do Fórum
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      run: python simulador_forum.py
+      run: python -u simulador_forum.py
