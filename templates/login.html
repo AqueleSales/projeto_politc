@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrar - eREDO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--text-main); margin: 0; font-family: 'Inter', sans-serif; padding: 20px;}
+        .auth-container-centro { background: var(--card-bg); border: 4px solid var(--bg-color); padding: 40px; border-radius: 16px; box-shadow: 10px 10px 0px var(--yellow-hero); width: 100%; max-width: 400px; text-align: center; color: var(--text-main); }
+        .auth-container-centro h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 0 0 20px 0; }
+
+        /* Botões Sociais */
+        .social-btns { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .btn-social { display: flex; align-items: center; justify-content: center; gap: 10px; background: transparent; border: 2px solid var(--text-main); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-main); transition: 0.2s; }
+        .btn-social:hover { background: var(--gray-card); }
+        .divisor { display: flex; align-items: center; margin: 15px 0; color: var(--muted-purple); font-size: 0.9rem; }
+        .divisor::before, .divisor::after { content: ""; flex: 1; border-bottom: 1px solid var(--border-color); margin: 0 10px; }
+
+        .auth-container-centro input { width: 100%; padding: 12px; margin-bottom: 15px; border: 3px solid var(--text-main); border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: var(--bg-color); }
+        .auth-container-centro .btn-brutal { width: 100%; padding: 15px; font-size: 1.1rem; margin-bottom: 15px; }
+        .auth-links { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .auth-links a { color: var(--muted-purple); text-decoration: none; font-weight: 600; transition: 0.2s; }
+        .auth-links a:hover { color: var(--text-main); }
+
+        #msg-erro { color: #e74c3c; font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="auth-container-centro">
+        <h2>Entrar no eREDO</h2>
+
+        <div class="social-btns">
+            <button class="btn-social" onclick="mostrarErro('Integração em breve!')">Google</button>
+            <button class="btn-social" onclick="mostrarErro('Integração em breve!')">Microsoft</button>
+        </div>
+
+        <div class="divisor">ou acesse com e-mail</div>
+
+        <p id="msg-erro">E-mail ou senha incorretos.</p>
+
+        <input type="email" id="login-email" placeholder="Seu e-mail cadastrado">
+        <input type="password" id="login-senha" placeholder="Sua senha">
+        <button class="btn-brutal btn-destaque" onclick="enviarLogin()">Acessar Plataforma</button>
+
+        <div class="auth-links">
+            <a href="/cadastro">Não tem conta? Crie aqui</a>
+            <a href="/" style="font-size: 0.85rem; margin-top: 15px;">← Voltar ao Início</a>
+        </div>
+    </div>
+
+    <script>
+        function mostrarErro(texto) {
+            const erroEl = document.getElementById('msg-erro');
+            erroEl.innerText = texto;
+            erroEl.style.display = 'block';
+        }
+
+        // LÓGICA DO "ENTER" PARA PULAR E LOGAR
+        document.getElementById('login-email').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') document.getElementById('login-senha').focus();
+        });
+        document.getElementById('login-senha').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') enviarLogin();
+        });
+
+        function enviarLogin() {
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-senha').value;
+            if (!email || !senha) { mostrarErro("Preencha todos os campos."); return; }
+
+            const btn = document.querySelector('.btn-destaque');
+            btn.innerText = "Verificando..."; btn.disabled = true;
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, senha: senha })
+            }).then(res => res.json()).then(data => {
+                if (data.sucesso) {
+                    btn.innerText = "Sucesso! Entrando...";
+                    btn.style.backgroundColor = "#2ecc71"; // Fica verde!
+
+                    // LÓGICA DE VOLTAR DE ONDE VEIO
+                    const leiPendente = sessionStorage.getItem('leiPendente');
+                    if(leiPendente) {
+                        window.location.href = '/?lei=' + leiPendente;
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    mostrarErro(data.erro);
+                    btn.innerText = "Acessar Plataforma"; btn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

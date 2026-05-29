@@ -1,21 +1,43 @@
 import io
 import matplotlib
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 matplotlib.use('Agg')  # <-- OBRIGATÓRIO para o Matplotlib funcionar dentro do Flask
 import matplotlib.pyplot as plt
 import pandas as pd
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, jsonify, request, Response, session, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from database import conectar, obter_engine_pandas
-from agentes_ia import gerar_materia_sob_demanda  # Importa o seu agente da Groq
-
+from agentes_ia import gerar_materia_sob_demanda
 app = Flask(__name__)
 
+# --- CONFIGURAÇÃO DE SEGURANÇA E SESSÃO ---
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "uma_chave_muito_secreta_e_complexa_eredo_2026")
+
+# 🔒 BLINDAGEM DE CACHE (Impede que o botão voltar do navegador mostre dados antigos após logout)
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
 
 # --- ROTA 1: PÁGINA PRINCIPAL ---
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/login')
+def page_login():
+    return render_template('login.html')
+
+@app.route('/cadastro')
+def page_cadastro():
+    return render_template('cadastro.html')
 
 
 # --- ROTA 2: FEED DE NOTÍCIAS COM PAGINAÇÃO, BUSCA E FILTROS ---
@@ -86,6 +108,7 @@ def api_noticias():
 
     return jsonify(resultado)
 
+
 # --- ROTA 3: LER MATÉRIA (CHAMA O AGENTE DA GROQ SE PRECISAR) ---
 @app.route('/api/ler_materia/<int:id_noticia>')
 def api_ler_materia(id_noticia):
@@ -146,7 +169,6 @@ def obter_dashboard_dinamico(id_noticia):
                 BY \
                 sentimento \
                 """
-        # Atenção: Ajustamos os % da query ILIKE para %% para não dar conflito com o %s no psycopg2
         df = pd.read_sql(query, engine, params=(id_noticia,))
 
         # Se df for uma tupla ao invés de dataframe, converte (proteção extra contra bugs do sqlalchemy)
@@ -190,38 +212,111 @@ def api_enviar_feedback():
     dados = request.json
     id_noticia = dados.get('id_noticia')
     texto_usuario = dados.get('texto')
-    nota_usuario = float(dados.get('nota', 5.0))  # Pega a nota enviada pelo JS
+    nota_usuario = float(dados.get('nota', 5.0))
 
     if not id_noticia or not texto_usuario:
         return jsonify({"erro": "Dados incompletos"}), 400
 
-    # --- A MÁGICA: Sincroniza as estrelas com a Pizza! ---
     if nota_usuario <= 3:
         sentimento_pizza = 'Não Útil (Humano)'
     else:
         sentimento_pizza = 'Útil (Humano)'
-    # -----------------------------------------------------
+
+    # VERIFICA A SESSÃO AQUI: Pega o nome do usuário logado ou define como anônimo
+    nome_usuario = session.get('usuario_nome', 'Cidadão Anônimo')
 
     conn = conectar()
     cursor = conn.cursor()
 
     try:
-        # Agora inserimos o "sentimento_pizza" no banco, em vez do texto fixo
         cursor.execute('''
                        INSERT INTO forum (id_noticia, nome_usuario, categoria_trabalhador, texto_comentario,
                                           nota_impacto, classificacao_ia)
                        VALUES (%s, %s, %s, %s, %s, %s)
-                       ''', (id_noticia, 'Você (Usuário)', 'Cidadão', texto_usuario, nota_usuario, sentimento_pizza))
+                       ''', (id_noticia, nome_usuario, 'Cidadão', texto_usuario, nota_usuario, sentimento_pizza))
 
         conn.commit()
-        conn.close()
         return jsonify({"sucesso": True, "mensagem": "Opinião registrada com sucesso!"})
 
     except Exception as e:
         print(f"Erro ao salvar feedback: {e}")
         conn.rollback()
-        conn.close()
         return jsonify({"erro": "Falha ao salvar no banco"}), 500
+    finally:
+        conn.close()
+
+
+# --- ROTA 7: CADASTRAR NOVO USUÁRIO ---
+@app.route('/api/cadastrar', methods=['POST'])
+def api_cadastrar():
+    dados = request.json
+    nome = dados.get('nome')
+    email = dados.get('email')
+    senha = dados.get('senha')
+
+    if not nome or not email or not senha:
+        return jsonify({"erro": "Todos os campos são obrigatórios"}), 400
+
+    senha_hash = generate_password_hash(senha)
+
+    conn = conectar()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("INSERT INTO usuarios (nome, email, senha_hash) VALUES (%s, %s, %s) RETURNING id",
+                       (nome, email, senha_hash))
+        novo_id = cursor.fetchone()[0]  # Pega o ID que acabou de ser criado
+        conn.commit()
+
+        # O PULO DO GATO: Já cria a sessão do usuário na mesma hora!
+        session['usuario_id'] = novo_id
+        session['usuario_nome'] = nome
+
+        return jsonify({"sucesso": True, "mensagem": "Usuário cadastrado e logado com sucesso!"})
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro no cadastro: {e}")
+        return jsonify({"erro": "E-mail já cadastrado ou erro no servidor."}), 400
+    finally:
+        conn.close()
+
+# --- ROTA 8: FAZER LOGIN ---
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    dados = request.json
+    email = dados.get('email')
+    senha = dados.get('senha')
+
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, nome, senha_hash FROM usuarios WHERE email = %s", (email,))
+    usuario = cursor.fetchone()
+    conn.close()
+
+    # Verifica se o usuário existe e se a senha bate com o Hash do banco
+    if usuario and check_password_hash(usuario[2], senha):
+        # Cria a sessão (o "crachá" virtual do usuário)
+        session['usuario_id'] = usuario[0]
+        session['usuario_nome'] = usuario[1]
+        return jsonify({"sucesso": True, "nome": usuario[1]})
+    else:
+        return jsonify({"erro": "E-mail ou senha incorretos"}), 401
+
+
+# --- ROTA 9: FAZER LOGOUT ---
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    session.clear()  # Rasga o crachá virtual
+    return jsonify({"sucesso": True, "mensagem": "Deslogado com sucesso"})
+
+
+# --- ROTA 10: VERIFICAR QUEM ESTÁ LOGADO ---
+@app.route('/api/status_login', methods=['GET'])
+def api_status_login():
+    # O JavaScript vai chamar essa rota o tempo todo para saber se deve mostrar "Entrar" ou "Sair"
+    if 'usuario_id' in session:
+        return jsonify({"logado": True, "nome": session['usuario_nome']})
+    return jsonify({"logado": False})
 
 
 if __name__ == "__main__":

@@ -8,8 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+
     <div class="layout-wrapper">
-        
+
         <aside class="sidebar">
             <div class="logo-area">
                 <h2>eREDO</h2>
@@ -20,7 +21,11 @@
                     <li><a href="#" class="nav-link" data-target="feed-noticias-section">Projetos de Lei<sup>02</sup></a></li>
                 </ul>
             </nav>
-            <div class="footer-nav">
+
+            <div id="auth-sidebar-container" style="margin-top: auto; padding: 20px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                </div>
+
+            <div class="footer-nav" style="margin-top: 0; padding-top: 20px;">
                 <ul>
                     <li><a href="#">Sobre Nós</a></li>
                     <li><a href="#">Contato</a></li>
@@ -55,7 +60,6 @@
                 <div id="feed-noticias-section" class="tab-content">
                     <section class="news-section">
 
-                        <!-- NOVO HEADER DE NOTÍCIAS COM PESQUISA E FILTROS -->
                         <div class="news-header">
                             <div class="news-titles">
                                 <h2>Novidades Legislativas</h2>
@@ -63,14 +67,12 @@
                             </div>
 
                             <div class="search-filter-container">
-                                <!-- Barra de Pesquisa -->
                                 <div class="search-box">
                                     <input type="text" id="input-pesquisa" placeholder="Pesquisar leis, temas...">
                                     <button class="search-btn">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     </button>
                                 </div>
-                                <!-- Botão de Filtro -->
                                 <button class="filter-btn" onclick="toggleModalFiltro()">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                     Filtros
@@ -86,7 +88,6 @@
                 </div>
             </div>
 
-            <!-- O MODAL DE FILTROS (Fica escondido por padrão) -->
             <div id="modal-filtro" class="modal-overlay">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -134,7 +135,7 @@
                             <h1 id="materia-titulo">Título da Matéria</h1>
 
                             <div id="materia-texto" class="texto-artigo">
-                                <div class="loading">🤖 Agente IA redigindo a matéria. Aguarde...</div>
+                                <div class="loading"> Agente IA redigindo a matéria. Aguarde...</div>
                             </div>
                         </div>
                     </div>
@@ -178,6 +179,19 @@
 
         </main>
     </div>
+    <div id="modal-convite" class="modal-overlay">
+        <div class="modal-content" style="text-align: center; max-width: 450px;">
+            <button class="close-btn" onclick="document.getElementById('modal-convite').classList.remove('active'); setTimeout(() => { document.getElementById('modal-convite').style.display = 'none'; }, 300);" style="position: absolute; right: 20px; top: 15px;">×</button>
+
+            <span style="font-size: 3rem;">📢</span>
+            <h3 style="font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--text-main); margin: 10px 0;">Sua voz importa!</h3>
+            <p style="color: var(--muted-purple); margin-bottom: 25px;">Para garantir debates reais e evitar robôs, pedimos que você acesse sua conta para publicar essa análise e computar suas estrelas.</p>
+
+            <button class="btn-brutal btn-destaque" style="width: 100%; margin-bottom: 10px; font-size: 1.1rem; padding: 12px;" onclick="window.location.href='/login'">Já tenho conta (Entrar)</button>
+            <button class="btn-brutal btn-roxo" style="width: 100%; font-size: 1.1rem; padding: 12px;" onclick="window.location.href='/cadastro'">Criar Conta Gratuita</button>
+        </div>
+    </div>
+    <!-- Modais removidos daqui! -->
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
