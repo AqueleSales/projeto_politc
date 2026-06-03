@@ -16,7 +16,7 @@ from agentes_ia import gerar_materia_sob_demanda
 app = Flask(__name__)
 
 # --- CONFIGURAÇÃO DE SEGURANÇA E SESSÃO ---
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "uma_chave_muito_secreta_e_complexa_eredo_2026")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "uma_chave_muito_secreta_e_complexa_e-redo_2026")
 
 # 🔒 BLINDAGEM DE CACHE (Impede que o botão voltar do navegador mostre dados antigos após logout)
 @app.after_request
